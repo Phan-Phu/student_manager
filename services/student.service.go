@@ -2,7 +2,6 @@ package services
 
 import (
 	"errors"
-	"log"
 	db "studenent_manager/models/db"
 
 	"github.com/kamva/mgm/v3"
@@ -61,19 +60,32 @@ func UpdateStudent(studentId int, name string, classID int, birthDay string) (*d
 		return nil, errors.New("cannot update student")
 	}
 
-	updatedStudent := &db.Student{}
-	err = mgm.Coll(updatedStudent).First(bson.M{"student_id": studentId}, updatedStudent)
+	return student, nil
+}
+
+func UpdateScore(studentId int, score int) (*db.Student, error) {
+	student := &db.Student{}
+	err := mgm.Coll(student).First(bson.M{"student_id": studentId}, student)
 	if err != nil {
-		return nil, errors.New("cannot fetch updated student")
+		if err == mgm.Ctx().Err() {
+			return nil, errors.New("student not found")
+		}
+		return nil, errors.New("cannot get student")
 	}
-	log.Println("Updated Student:", updatedStudent)
+
+	student.Score = score
+
+	err = mgm.Coll(student).Update(student)
+	if err != nil {
+		return nil, errors.New("cannot update student")
+	}
 
 	return student, nil
 }
 
 func DeleteStudent(studentID int) error {
 	student := &db.Student{}
-	err := mgm.Coll(student).FindByID(studentID, student)
+	err := mgm.Coll(student).First(bson.M{"student_id": studentID}, student)
 	if err != nil {
 		if err == mgm.Ctx().Err() {
 			return errors.New("student not found")
@@ -87,4 +99,10 @@ func DeleteStudent(studentID int) error {
 	}
 
 	return nil
+}
+
+func GenerateStudentID() int {
+	students, _ := GetStudents()
+	studentId := len(students) + 1
+	return studentId
 }

@@ -29,6 +29,11 @@ func StudentRoute(router *gin.RouterGroup) {
 			controllers.UpdateStudent,
 		)
 
+		auth.POST(
+			"/updateScore",
+			controllers.UpdateScore,
+		)
+
 		auth.DELETE(
 			"/deleteById",
 			controllers.DeleteStudent,

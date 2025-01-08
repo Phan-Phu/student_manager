@@ -6,32 +6,32 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func ClassRoute(router *gin.RouterGroup) {
-	auth := router.Group("/class")
+func TeacherRoute(router *gin.RouterGroup) {
+	auth := router.Group("/teacher")
 	{
 		auth.POST(
 			"/create",
-			controllers.CreateClass,
+			controllers.CreateTeacher,
 		)
 
 		auth.GET(
 			"/getAll",
-			controllers.GetClasses,
+			controllers.GetTeachers,
 		)
 
 		auth.GET(
 			"/getById",
-			controllers.GetClass,
+			controllers.GetTeacher,
 		)
 
 		auth.POST(
 			"/update",
-			controllers.UpdateClass,
+			controllers.UpdateTeacher,
 		)
 
 		auth.DELETE(
 			"/deleteById",
-			controllers.DeleteClass,
+			controllers.DeleteTeacher,
 		)
 	}
 }

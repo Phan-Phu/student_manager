@@ -10,9 +10,10 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func CreateClass(c *gin.Context) {
+func CreateTeacher(c *gin.Context) {
 	// Gán giá trị mặc định cho trường Role
-	var requestBody db.Class
+	// cần check class id
+	var requestBody db.Teacher
 	_ = c.ShouldBindJSON(&requestBody)
 	requestBody.Name = strings.TrimSpace(requestBody.Name)
 
@@ -21,7 +22,10 @@ func CreateClass(c *gin.Context) {
 		Success:    false,
 	}
 
-	class, err := services.CreateClass(requestBody.Name, requestBody.StudentIds, requestBody.TeacherIds)
+	teacherId := services.GenerateTeacherID()
+
+	teacher, err := services.CreateTeacher(teacherId, requestBody.Name, requestBody.ClassIds,
+		requestBody.BirthDay, requestBody.Username, requestBody.Password)
 	if err != nil {
 		response.Message = err.Error()
 		response.SendResponse(c)
@@ -31,18 +35,18 @@ func CreateClass(c *gin.Context) {
 	response.StatusCode = http.StatusCreated
 	response.Success = true
 	response.Data = gin.H{
-		"class": class,
+		"teacher": teacher,
 	}
 	response.SendResponse(c)
 }
 
-func GetClasses(c *gin.Context) {
+func GetTeachers(c *gin.Context) {
 	response := &models.Response{
 		StatusCode: http.StatusOK,
 		Success:    true,
 	}
 
-	classes, err := services.GetClasses()
+	teachers, err := services.GetTeachers()
 	if err != nil {
 		response.StatusCode = http.StatusInternalServerError
 		response.Success = false
@@ -52,12 +56,12 @@ func GetClasses(c *gin.Context) {
 	}
 
 	response.Data = gin.H{
-		"classes": classes,
+		"teachers": teachers,
 	}
 	response.SendResponse(c)
 }
 
-func GetClass(c *gin.Context) {
+func GetTeacher(c *gin.Context) {
 	response := &models.Response{
 		StatusCode: http.StatusOK,
 		Success:    true,
@@ -68,7 +72,7 @@ func GetClass(c *gin.Context) {
 	}
 	_ = c.ShouldBindJSON(&requestBody)
 
-	class, err := services.GetClass(requestBody.Name)
+	teacher, err := services.GetTeacher(requestBody.Name)
 	if err != nil {
 		response.StatusCode = http.StatusNotFound
 		response.Success = false
@@ -78,13 +82,13 @@ func GetClass(c *gin.Context) {
 	}
 
 	response.Data = gin.H{
-		"class": class,
+		"teacher": teacher,
 	}
 	response.SendResponse(c)
 }
 
-func UpdateClass(c *gin.Context) {
-	var requestBody db.Class
+func UpdateTeacher(c *gin.Context) {
+	var requestBody db.Teacher
 	_ = c.ShouldBindJSON(&requestBody)
 	requestBody.Name = strings.TrimSpace(requestBody.Name)
 
@@ -93,10 +97,7 @@ func UpdateClass(c *gin.Context) {
 		Success:    true,
 	}
 
-	students := requestBody.StudentIds
-	teachers := requestBody.TeacherIds
-
-	class, err := services.UpdateClass(requestBody.ClassID, requestBody.Name, students, teachers)
+	teacher, err := services.UpdateTeacher(requestBody.TeacherID, requestBody.Name, requestBody.ClassIds, requestBody.BirthDay)
 	if err != nil {
 		response.StatusCode = http.StatusNotFound
 		response.Success = false
@@ -106,22 +107,22 @@ func UpdateClass(c *gin.Context) {
 	}
 
 	response.Data = gin.H{
-		"class": class,
+		"teacher": teacher,
 	}
 	response.SendResponse(c)
 }
 
-func DeleteClass(c *gin.Context) {
+func DeleteTeacher(c *gin.Context) {
 	response := &models.Response{
 		StatusCode: http.StatusOK,
 		Success:    true,
 	}
 	var requestBody struct {
-		ClassID int `json:"class_id"`
+		TeacherID int `json:"teacher_id"`
 	}
 	_ = c.ShouldBindJSON(&requestBody)
 
-	err := services.DeleteClass(requestBody.ClassID)
+	err := services.DeleteTeacher(requestBody.TeacherID)
 	if err != nil {
 		response.StatusCode = http.StatusNotFound
 		response.Success = false
@@ -130,6 +131,26 @@ func DeleteClass(c *gin.Context) {
 		return
 	}
 
-	response.Message = "Class deleted successfully"
+	response.Message = "Teacher deleted successfully"
 	response.SendResponse(c)
+}
+
+func LoginTeacher(c *gin.Context) {
+	var requestBody struct {
+		Username string `json:"username"`
+		Password string `json:"password"`
+	}
+
+	if err := c.ShouldBindJSON(&requestBody); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	errLogin := services.LoginTeacher(requestBody.Username, requestBody.Password)
+	if errLogin != nil {
+		c.JSON(http.StatusNotFound, gin.H{"message": "Login Fail"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Login successful"})
 }

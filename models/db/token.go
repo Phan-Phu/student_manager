@@ -10,11 +10,11 @@ import (
 
 type Token struct {
 	mgm.DefaultModel `bson:",inline"`
-	User             primitive.ObjectID `json:"user" bson:"user"`
-	Token            string             `json:"token" bson:"token"`
-	Role             Role               `json:"role" bson:"role"`
-	ExpiresAt        time.Time          `json:"expires_at" bson:"expires_at"`
-	Blacklisted      bool               `json:"blacklisted" bson:"blacklisted"`
+	User             primitive.ObjectID `json:"user"`
+	Token            string             `json:"token"`
+	Role             Role               `json:"role"`
+	ExpiresAt        time.Time          `json:"expires_at"`
+	Blacklisted      bool               `json:"blacklisted"`
 }
 
 func (model *Token) GetResponseJson() gin.H {

@@ -2,6 +2,8 @@ package routes
 
 import (
 	"net/http"
+	"studenent_manager/controllers"
+	"studenent_manager/middlewares"
 	"studenent_manager/models"
 	"studenent_manager/services"
 
@@ -19,11 +21,21 @@ func ConfigRoute() *gin.Engine {
 	// r.Use(gin.LoggerWithWriter(middlewares.LogWriter()))
 	// r.Use(gin.CustomRecovery(middlewares.AppRecovery()))
 	// r.Use(middlewares.CORSMiddleware())
+	r.POST("/admin/login", controllers.Login)
 
 	v1 := r.Group("/v1")
+	v1.Use(middlewares.AuthMiddleware())
 	{
 		StudentRoute(v1)
+		TeacherRoute(v1)
 		ClassRoute(v1)
+	}
+
+	r.POST("/teacher/login", controllers.LoginTeacher)
+	teacher := r.Group("/teacher")
+	teacher.Use(middlewares.TeacherMiddleware())
+	{
+		StudentRoute(teacher)
 	}
 
 	//docs.SwaggerInfo.BasePath = v1.BasePath() // adds /v1 to swagger base path

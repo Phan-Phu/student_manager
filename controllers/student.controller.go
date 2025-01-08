@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"net/http"
-	"strconv"
 	"strings"
 	"studenent_manager/models"
 	"studenent_manager/models/db"
@@ -13,6 +12,7 @@ import (
 
 func CreateStudent(c *gin.Context) {
 	// Gán giá trị mặc định cho trường Role
+	// cần check class id
 	var requestBody db.Student
 	_ = c.ShouldBindJSON(&requestBody)
 	requestBody.Name = strings.TrimSpace(requestBody.Name)
@@ -22,9 +22,7 @@ func CreateStudent(c *gin.Context) {
 		Success:    false,
 	}
 
-	// class := GetClassById(requestBody.ClassID)
-	// studentId := len(class.Students) + 1
-	studentId := 1
+	studentId := services.GenerateStudentID()
 
 	student, err := services.CreateStudent(studentId, requestBody.Name, requestBody.ClassID, requestBody.BirthDay)
 	if err != nil {
@@ -113,16 +111,42 @@ func UpdateStudent(c *gin.Context) {
 	response.SendResponse(c)
 }
 
-func DeleteStudent(c *gin.Context) {
+func UpdateScore(c *gin.Context) {
+	var requestBody db.Student
+	_ = c.ShouldBindJSON(&requestBody)
+	requestBody.Name = strings.TrimSpace(requestBody.Name)
+
 	response := &models.Response{
 		StatusCode: http.StatusOK,
 		Success:    true,
 	}
 
-	studentIDStr := c.Param("student_id")
-	studentID, err := strconv.Atoi(studentIDStr)
+	student, err := services.UpdateScore(requestBody.StudentID, requestBody.Score)
+	if err != nil {
+		response.StatusCode = http.StatusNotFound
+		response.Success = false
+		response.Message = err.Error()
+		response.SendResponse(c)
+		return
+	}
 
-	err = services.DeleteStudent(studentID)
+	response.Data = gin.H{
+		"student": student,
+	}
+	response.SendResponse(c)
+}
+
+func DeleteStudent(c *gin.Context) {
+	response := &models.Response{
+		StatusCode: http.StatusOK,
+		Success:    true,
+	}
+	var requestBody struct {
+		StudentID int `json:"student_id"`
+	}
+	_ = c.ShouldBindJSON(&requestBody)
+
+	err := services.DeleteStudent(requestBody.StudentID)
 	if err != nil {
 		response.StatusCode = http.StatusNotFound
 		response.Success = false
