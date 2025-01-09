@@ -22,13 +22,14 @@ func ConfigRoute() *gin.Engine {
 	// r.Use(gin.CustomRecovery(middlewares.AppRecovery()))
 	// r.Use(middlewares.CORSMiddleware())
 	r.POST("/admin/login", controllers.Login)
+	r.POST("/admin/logout", controllers.Logout)
 
-	v1 := r.Group("/v1")
-	v1.Use(middlewares.AuthMiddleware())
+	admin := r.Group("/admin")
+	admin.Use(middlewares.AuthMiddleware())
 	{
-		StudentRoute(v1)
-		TeacherRoute(v1)
-		ClassRoute(v1)
+		StudentRoute(admin)
+		TeacherRoute(admin)
+		ClassRoute(admin)
 	}
 
 	r.POST("/teacher/login", controllers.LoginTeacher)
@@ -38,7 +39,7 @@ func ConfigRoute() *gin.Engine {
 		StudentRoute(teacher)
 	}
 
-	//docs.SwaggerInfo.BasePath = v1.BasePath() // adds /v1 to swagger base path
+	//docs.SwaggerInfo.BasePath = admin.BasePath() // adds /admin to swagger base path
 
 	//r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerfiles.Handler))
 
