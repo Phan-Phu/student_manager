@@ -4,27 +4,29 @@ import (
 	"net/http"
 	"strings"
 	"studenent_manager/models"
-	"studenent_manager/models/db"
+	"studenent_manager/models/schemas"
 	"studenent_manager/services"
 
 	"github.com/gin-gonic/gin"
 )
 
 func CreateStudent(c *gin.Context) {
-	// Gán giá trị mặc định cho trường Role
-	// cần check class id
-	var requestBody db.Student
-	_ = c.ShouldBindJSON(&requestBody)
-	requestBody.Name = strings.TrimSpace(requestBody.Name)
-
 	response := &models.Response{
 		StatusCode: http.StatusBadRequest,
 		Success:    false,
 	}
 
-	studentId := services.GenerateStudentID()
+	var requestBody schemas.RequestStudent
+	_ = c.ShouldBindJSON(&requestBody)
 
-	student, err := services.CreateStudent(studentId, requestBody.Name, requestBody.ClassID, requestBody.BirthDay)
+	err := requestBody.Validate()
+	if err != nil {
+		response.Message = err.Error()
+		response.SendResponse(c)
+		return
+	}
+	requestBody.Name = strings.TrimSpace(requestBody.Name)
+	student, err := services.CreateStudent(requestBody)
 	if err != nil {
 		response.Message = err.Error()
 		response.SendResponse(c)
@@ -41,8 +43,8 @@ func CreateStudent(c *gin.Context) {
 
 func GetStudents(c *gin.Context) {
 	response := &models.Response{
-		StatusCode: http.StatusOK,
-		Success:    true,
+		StatusCode: http.StatusBadRequest,
+		Success:    false,
 	}
 
 	students, err := services.GetStudents()
@@ -87,7 +89,7 @@ func GetStudent(c *gin.Context) {
 }
 
 func UpdateStudent(c *gin.Context) {
-	var requestBody db.Student
+	var requestBody schemas.UpdateStudent
 	_ = c.ShouldBindJSON(&requestBody)
 	requestBody.Name = strings.TrimSpace(requestBody.Name)
 
@@ -96,7 +98,7 @@ func UpdateStudent(c *gin.Context) {
 		Success:    true,
 	}
 
-	student, err := services.UpdateStudent(requestBody.StudentID, requestBody.Name, requestBody.ClassID, requestBody.BirthDay)
+	student, err := services.UpdateStudent(requestBody)
 	if err != nil {
 		response.StatusCode = http.StatusNotFound
 		response.Success = false
@@ -112,16 +114,15 @@ func UpdateStudent(c *gin.Context) {
 }
 
 func UpdateScore(c *gin.Context) {
-	var requestBody db.Student
+	var requestBody schemas.UpdateScoreStudent
 	_ = c.ShouldBindJSON(&requestBody)
-	requestBody.Name = strings.TrimSpace(requestBody.Name)
 
 	response := &models.Response{
 		StatusCode: http.StatusOK,
 		Success:    true,
 	}
 
-	student, err := services.UpdateScore(requestBody.StudentID, requestBody.Score)
+	student, err := services.UpdateScore(requestBody)
 	if err != nil {
 		response.StatusCode = http.StatusNotFound
 		response.Success = false
@@ -146,7 +147,7 @@ func DeleteStudent(c *gin.Context) {
 	}
 	_ = c.ShouldBindJSON(&requestBody)
 
-	err := services.DeleteStudent(requestBody.StudentID)
+	err := services.DeleteStudent(requestBody)
 	if err != nil {
 		response.StatusCode = http.StatusNotFound
 		response.Success = false

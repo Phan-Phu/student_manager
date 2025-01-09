@@ -3,59 +3,59 @@ package middlewares
 import (
 	"net/http"
 	"studenent_manager/models/db"
+	"time"
 
-	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt"
+	"github.com/kamva/mgm/v3"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
-// Update with the correct import path for your db package
-
+// Middleware để check JWT token
 func AuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// Retrieve the token from the cookies
-		cookie, err := c.Cookie("token")
-		if err != nil {
-			if err == http.ErrNoCookie {
-				c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
-				c.Abort() // Prevent further processing
-				return
-			}
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-			c.Abort() // Prevent further processing
+		// Get token from Authorization header
+		accessToken := c.GetHeader("Authorization")
+		if accessToken == "" {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Authorization header is required"})
+			c.Abort()
 			return
 		}
 
-		tokenString := cookie
+		session := &db.Token{}
+		err := mgm.Coll(session).First(bson.M{
+			"access_token": accessToken,
+			"access_expires_at": bson.M{
+				"$gt": time.Now(),
+			},
+		}, session)
+
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Error validating token"})
+			c.Abort()
+			return
+		}
+
+		// Validate JWT token
 		claims := &db.Claims{}
-		token, err := jwt.ParseWithClaims(tokenString, claims, func(token *jwt.Token) (interface{}, error) {
-			return []byte("your-secret-key"), nil
+		_, _ = jwt.ParseWithClaims(accessToken, claims, func(token *jwt.Token) (interface{}, error) {
+			return []byte("admin-key"), nil
 		})
 
-		if err != nil {
-			if err == jwt.ErrSignatureInvalid {
-				c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
-				c.Abort() // Prevent further processing
-				return
-			}
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-			c.Abort() // Prevent further processing
-			return
-		}
-
-		if !token.Valid {
-			c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
-			c.Abort() // Prevent further processing
-			return
-		}
-
-		// Check if the user has the correct role
-		if claims.Role != db.AdminRole {
-			c.JSON(http.StatusForbidden, gin.H{"error": "Forbidden"})
-			c.Abort() // Prevent further processing
-			return
-		}
-
-		// Continue with the next handler in the chain
+		// Set claims to context
+		c.Set("claims", claims)
+		c.Set("username", claims.Username)
 		c.Next()
 	}
 }
+
+// func CleanupExpiredSessions() {
+// 	_, err := mgm.Coll(&db.Token{}).DeleteMany(mgm.Ctx(), bson.M{
+// 		"refresh_expires_at": bson.M{
+// 			"$lt": time.Now(),
+// 		},
+// 	})
+// 	if err != nil {
+// 		log.Printf("Failed to cleanup expired sessions: %v", err)
+// 	}
+// }

@@ -154,3 +154,11 @@ func LoginTeacher(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"message": "Login successful"})
 }
+
+func LogoutTeacher(c *gin.Context) {
+	// Clear the token cookie
+	c.SetCookie("token", "", -1, "/", "", false, true)
+
+	// Return success response
+	c.JSON(http.StatusOK, gin.H{"message": "Logged out successfully"})
+}

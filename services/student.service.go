@@ -3,26 +3,31 @@ package services
 import (
 	"errors"
 	db "studenent_manager/models/db"
+	"studenent_manager/models/repository"
+	"studenent_manager/models/schemas"
 
 	"github.com/kamva/mgm/v3"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-func CreateStudent(studentId int, name string, classID int, birthDay string) (*db.Student, error) {
-	student := db.CreateStudent(studentId, name, classID, birthDay, 0)
-	err := mgm.Coll(student).Create(student)
+func CreateStudent(data schemas.RequestStudent) (*db.Student, error) {
+	studentId := GenerateStudentID()
+	initScore := 0
+
+	student := db.CreateStudent(studentId, data.Name, data.ClassID, data.BirthDay, initScore)
+	err := repository.NewMongoStudentRepository().Create(student)
 
 	if err != nil {
-		return nil, errors.New("cannot create new user")
+		return nil, errors.New("cannot create new student")
 	}
 
 	return student, nil
 }
 
-func GetStudents() ([]db.Student, error) {
-	var students []db.Student
-	err := mgm.Coll(&db.Student{}).SimpleFind(&students, bson.M{})
+func GetStudents() ([]*db.Student, error) {
+	students, err := repository.NewMongoStudentRepository().FindAll()
+
 	if err != nil {
 		return nil, errors.New("cannot get students")
 	}
@@ -41,9 +46,8 @@ func GetStudent(studentName string) (*db.Student, error) {
 	return student, nil
 }
 
-func UpdateStudent(studentId int, name string, classID int, birthDay string) (*db.Student, error) {
-	student := &db.Student{}
-	err := mgm.Coll(student).First(bson.M{"student_id": studentId}, student)
+func UpdateStudent(data schemas.UpdateStudent) (*db.Student, error) {
+	student, err := repository.NewMongoStudentRepository().FindByID(data.StudentID)
 	if err != nil {
 		if err == mgm.Ctx().Err() {
 			return nil, errors.New("student not found")
@@ -51,9 +55,9 @@ func UpdateStudent(studentId int, name string, classID int, birthDay string) (*d
 		return nil, errors.New("cannot get student")
 	}
 
-	student.Name = name
-	student.ClassID = classID
-	student.BirthDay = birthDay
+	student.Name = data.Name
+	student.ClassID = data.ClassID
+	student.BirthDay = data.BirthDay
 
 	err = mgm.Coll(student).Update(student)
 	if err != nil {
@@ -63,9 +67,8 @@ func UpdateStudent(studentId int, name string, classID int, birthDay string) (*d
 	return student, nil
 }
 
-func UpdateScore(studentId int, score int) (*db.Student, error) {
-	student := &db.Student{}
-	err := mgm.Coll(student).First(bson.M{"student_id": studentId}, student)
+func UpdateScore(data schemas.UpdateScoreStudent) (*db.Student, error) {
+	student, err := repository.NewMongoStudentRepository().FindByID(data.StudentID)
 	if err != nil {
 		if err == mgm.Ctx().Err() {
 			return nil, errors.New("student not found")
@@ -73,7 +76,7 @@ func UpdateScore(studentId int, score int) (*db.Student, error) {
 		return nil, errors.New("cannot get student")
 	}
 
-	student.Score = score
+	student.Score = data.Score
 
 	err = mgm.Coll(student).Update(student)
 	if err != nil {
@@ -83,9 +86,8 @@ func UpdateScore(studentId int, score int) (*db.Student, error) {
 	return student, nil
 }
 
-func DeleteStudent(studentID int) error {
-	student := &db.Student{}
-	err := mgm.Coll(student).First(bson.M{"student_id": studentID}, student)
+func DeleteStudent(data schemas.DeleteStudent) error {
+	student, err := repository.NewMongoStudentRepository().FindByID(data.StudentID)
 	if err != nil {
 		if err == mgm.Ctx().Err() {
 			return errors.New("student not found")

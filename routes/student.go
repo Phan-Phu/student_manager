@@ -14,8 +14,8 @@ func StudentRoute(router *gin.RouterGroup) {
 			controllers.CreateStudent,
 		)
 
-		auth.GET(
-			"/getAll",
+		auth.POST(
+			"/getAll", //
 			controllers.GetStudents,
 		)
 

@@ -4,13 +4,12 @@ import "github.com/kamva/mgm/v3"
 
 type Student struct {
 	mgm.DefaultModel `bson:",inline"`
-	//ID        primitive.ObjectID `json:"id" bson:"_id"` // primary key
-	StudentID int    `json:"student_id" bson:"student_id"`
-	Name      string `json:"name" bson:"name"`
-	ClassID   int    `json:"class_id" bson:"class_id"`
-	BirthDay  string `json:"birth_day" bson:"birth_day"`
-	Score     int    `json:"score" bson:"score"`
-	Role      Role   `json:"role" bson:"role"` // not input from user
+	StudentID        int    `json:"student_id" bson:"student_id"`
+	Name             string `json:"name" bson:"name"`
+	ClassID          int    `json:"class_id" bson:"class_id"`
+	BirthDay         string `json:"birth_day" bson:"birth_day"`
+	Score            int    `json:"score" bson:"score"`
+	Role             Role   `json:"role" bson:"role"` // not input from user
 }
 
 func CreateStudent(studentId int, name string, classID int, birthDay string, score int) *Student {

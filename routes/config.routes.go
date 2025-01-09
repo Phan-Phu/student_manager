@@ -21,8 +21,9 @@ func ConfigRoute() *gin.Engine {
 	// r.Use(gin.LoggerWithWriter(middlewares.LogWriter()))
 	// r.Use(gin.CustomRecovery(middlewares.AppRecovery()))
 	// r.Use(middlewares.CORSMiddleware())
-	r.POST("/admin/login", controllers.Login)
-	r.POST("/admin/logout", controllers.Logout)
+	r.POST("/admin/login", controllers.LoginAdmin)
+	r.POST("/admin/logout", controllers.LogoutAdmin)
+	r.POST("/admin/refreshToken", controllers.RefreshToken)
 
 	admin := r.Group("/admin")
 	admin.Use(middlewares.AuthMiddleware())
@@ -33,6 +34,8 @@ func ConfigRoute() *gin.Engine {
 	}
 
 	r.POST("/teacher/login", controllers.LoginTeacher)
+	r.POST("/teacher/logout", controllers.LogoutTeacher)
+
 	teacher := r.Group("/teacher")
 	teacher.Use(middlewares.TeacherMiddleware())
 	{

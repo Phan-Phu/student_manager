@@ -3,31 +3,30 @@ package db
 import (
 	"time"
 
-	"github.com/gin-gonic/gin"
 	"github.com/kamva/mgm/v3"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type Token struct {
 	mgm.DefaultModel `bson:",inline"`
-	User             primitive.ObjectID `json:"user"`
-	Token            string             `json:"token"`
-	Role             Role               `json:"role"`
-	ExpiresAt        time.Time          `json:"expires_at"`
-	Blacklisted      bool               `json:"blacklisted"`
+	AccessToken      string             `json:"access_token" bson:"access_token"`             // Token truy cập
+	User             primitive.ObjectID `json:"user" bson:"user"`                             // ID người dùng
+	RefreshToken     string             `json:"refresh_token" bson:"refresh_token"`           // Token làm mới
+	Role             Role               `json:"role" bson:"role"`                             // Vai trò người dùng
+	AccessExpiresAt  time.Time          `json:"access_expires_at" bson:"access_expires_at"`   // Thời điểm hết hạn token truy cập
+	RefreshExpiresAt time.Time          `json:"refresh_expires_at" bson:"refresh_expires_at"` // Thời điểm hết hạn token truy cập
+	Blacklisted      bool               `json:"blacklisted" bson:"blacklisted"`               // Trạng thái blacklist
 }
 
-func (model *Token) GetResponseJson() gin.H {
-	return gin.H{"token": model.Token, "expires": model.ExpiresAt.Format("2006-01-02 15:04:05")}
-}
-
-func NewToken(userId primitive.ObjectID, tokenString string, role Role, expiresAt time.Time) *Token {
+func NewToken(tokenAccess string, tokenRefresh string, role Role, expiresAt time.Time, refreshExpiresAt time.Time) *Token {
 	return &Token{
-		User:        userId,
-		Token:       tokenString,
-		Role:        role,
-		ExpiresAt:   expiresAt,
-		Blacklisted: false,
+		User:             primitive.NewObjectID(),
+		AccessToken:      tokenAccess,
+		RefreshToken:     tokenRefresh,
+		AccessExpiresAt:  expiresAt,
+		RefreshExpiresAt: refreshExpiresAt,
+		Role:             role,
+		Blacklisted:      false,
 	}
 }
 

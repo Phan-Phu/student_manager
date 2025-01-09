@@ -6,14 +6,14 @@ import (
 )
 
 type Config struct {
-	ServerPort      string `mapstructure:"SERVER_PORT"`
-	ServerAddr      string `mapstructure:"SERVER_ADDR"`
-	MongodbUri      string `mapstructure:"MONGO_URI"`
-	MongodbDatabase string `mapstructure:"MONGO_DATABASE"`
-	Mode            string `mapstructure:"MODE"`
-	// JWTSecretKey               string `mapstructure:"JWT_SECRET"`
-	// JWTAccessExpirationMinutes int    `mapstructure:"JWT_ACCESS_EXPIRATION_MINUTES"`
-	// JWTRefreshExpirationDays   int    `mapstructure:"JWT_REFRESH_EXPIRATION_DAYS"`
+	ServerPort                 string `mapstructure:"SERVER_PORT"`
+	ServerAddr                 string `mapstructure:"SERVER_ADDR"`
+	MongodbUri                 string `mapstructure:"MONGO_URI"`
+	MongodbDatabase            string `mapstructure:"MONGO_DATABASE"`
+	Mode                       string `mapstructure:"MODE"`
+	JWTSecretKey               string `mapstructure:"JWT_SECRET"`
+	JWTAccessExpirationMinutes int    `mapstructure:"JWT_ACCESS_EXPIRATION_MINUTES"`
+	JWTRefreshExpirationDays   int    `mapstructure:"JWT_REFRESH_EXPIRATION_DAYS"`
 } //`mapstructure:"db"`
 
 func (config *Config) Validate() error {
@@ -24,9 +24,9 @@ func (config *Config) Validate() error {
 		validation.Field(&config.MongodbUri, validation.Required),
 		validation.Field(&config.MongodbDatabase, validation.Required),
 
-		// validation.Field(&config.JWTSecretKey, validation.Required),
-		// validation.Field(&config.JWTAccessExpirationMinutes, validation.Required),
-		// validation.Field(&config.JWTRefreshExpirationDays, validation.Required),
+		validation.Field(&config.JWTSecretKey, validation.Required),
+		validation.Field(&config.JWTAccessExpirationMinutes, validation.Required),
+		validation.Field(&config.JWTRefreshExpirationDays, validation.Required),
 
 		validation.Field(&config.Mode, validation.In("debug", "release")),
 	)
