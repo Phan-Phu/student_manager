@@ -10,10 +10,16 @@
 			"name": "Create_Student",
 			"request": {
 				"method": "POST",
-				"header": [],
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImFkbWluIiwicm9sZSI6MCwiZXhwIjoxNzM2NDE5ODEzfQ.zxIhIcQ5UggcqLbVzRenLTv7vijFcMw-fYcttzcg0e0",
+						"type": "text"
+					}
+				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n    \"name\": \"BBCBB\",\r\n    \"class_id\": 1,\r\n    \"birth_day\": \"20/10/2002\"\r\n}",
+					"raw": "{\r\n    \"name\": \"BBCBB\",\r\n    \"class_id\": 1,\r\n    \"birth_day\": \"20-10-2002\"\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -39,8 +45,23 @@
 		{
 			"name": "Get Students",
 			"request": {
-				"method": "GET",
-				"header": [],
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImFkbWluIiwicm9sZSI6MCwiZXhwIjoxNzM2NDk5MTI4fQ.DcUEPfAXvxEEy9YJgqBnNPiF5ADPMpzjv1fPdGU2dRw",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"page\": 1,\r\n    \"limit\": 3\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
 				"url": {
 					"raw": "http://localhost:8080/admin/student/getAll",
 					"protocol": "http",
@@ -64,10 +85,16 @@
 			},
 			"request": {
 				"method": "GET",
-				"header": [],
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImFkbWluIiwicm9sZSI6MCwiZXhwIjoxNzM2NDE5ODEzfQ.zxIhIcQ5UggcqLbVzRenLTv7vijFcMw-fYcttzcg0e0",
+						"type": "text"
+					}
+				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n    \"name\" : \"AAAA\"\r\n}",
+					"raw": "{\r\n    \"name\" : \"BBBB\"\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -75,14 +102,14 @@
 					}
 				},
 				"url": {
-					"raw": "http://localhost:8080/v1/student/getById",
+					"raw": "http://localhost:8080/admin/student/getById",
 					"protocol": "http",
 					"host": [
 						"localhost"
 					],
 					"port": "8080",
 					"path": [
-						"v1",
+						"admin",
 						"student",
 						"getById"
 					]
@@ -92,9 +119,18 @@
 		},
 		{
 			"name": "Update Student",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
 			"request": {
-				"method": "POST",
-				"header": [],
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImFkbWluIiwicm9sZSI6MCwiZXhwIjoxNzM2NDE5ODEzfQ.zxIhIcQ5UggcqLbVzRenLTv7vijFcMw-fYcttzcg0e0",
+						"type": "text"
+					}
+				],
 				"body": {
 					"mode": "raw",
 					"raw": "{\r\n    \"student_id\": 1,\r\n    \"name\": \"BBBB\",\r\n    \"class_id\": 2,\r\n    \"birth_day\": \"20/11/2001\"\r\n}",
@@ -105,14 +141,14 @@
 					}
 				},
 				"url": {
-					"raw": "http://localhost:8080/v1/student/update",
+					"raw": "http://localhost:8080/admin/student/update",
 					"protocol": "http",
 					"host": [
 						"localhost"
 					],
 					"port": "8080",
 					"path": [
-						"v1",
+						"admin",
 						"student",
 						"update"
 					]
@@ -124,7 +160,13 @@
 			"name": "Delete Student",
 			"request": {
 				"method": "DELETE",
-				"header": [],
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImFkbWluIiwicm9sZSI6MCwiZXhwIjoxNzM2NDE5ODEzfQ.zxIhIcQ5UggcqLbVzRenLTv7vijFcMw-fYcttzcg0e0",
+						"type": "text"
+					}
+				],
 				"body": {
 					"mode": "raw",
 					"raw": "{\r\n    \"student_id\": 1\r\n}",
@@ -135,14 +177,14 @@
 					}
 				},
 				"url": {
-					"raw": "http://localhost:8080/v1/student/deleteById",
+					"raw": "http://localhost:8080/admin/student/deleteById",
 					"protocol": "http",
 					"host": [
 						"localhost"
 					],
 					"port": "8080",
 					"path": [
-						"v1",
+						"admin",
 						"student",
 						"deleteById"
 					]
@@ -187,7 +229,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n    \"name\": \"Class 1\",\r\n    \"studentIds\":[1, 2, 3]\r\n}",
+					"raw": "{\r\n    \"name\": \"Class 1\",\r\n    \"studentIds\":[1, 2, 3],\r\n    \"AAAA\": 1\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -195,14 +237,14 @@
 					}
 				},
 				"url": {
-					"raw": "http://localhost:8080/v1/class/create",
+					"raw": "http://localhost:8080/admin/class/create",
 					"protocol": "http",
 					"host": [
 						"localhost"
 					],
 					"port": "8080",
 					"path": [
-						"v1",
+						"admin",
 						"class",
 						"create"
 					]
@@ -233,18 +275,30 @@
 		},
 		{
 			"name": "Get class",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
 			"request": {
 				"method": "GET",
 				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"name\": \"Class 1\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
 				"url": {
-					"raw": "http://localhost:8080/v1/class/getById",
+					"raw": "http://localhost:8080/admin/class/getById",
 					"protocol": "http",
 					"host": [
 						"localhost"
 					],
 					"port": "8080",
 					"path": [
-						"v1",
+						"admin",
 						"class",
 						"getById"
 					]
@@ -258,14 +312,14 @@
 				"method": "POST",
 				"header": [],
 				"url": {
-					"raw": "http://localhost:8080/v1/class/update",
+					"raw": "http://localhost:8080/admin/class/update",
 					"protocol": "http",
 					"host": [
 						"localhost"
 					],
 					"port": "8080",
 					"path": [
-						"v1",
+						"admin",
 						"class",
 						"update"
 					]
@@ -278,15 +332,24 @@
 			"request": {
 				"method": "DELETE",
 				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"class_id\": 1\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
 				"url": {
-					"raw": "http://localhost:8080/v1/class/deleteById",
+					"raw": "http://localhost:8080/admin/class/deleteById",
 					"protocol": "http",
 					"host": [
 						"localhost"
 					],
 					"port": "8080",
 					"path": [
-						"v1",
+						"admin",
 						"class",
 						"deleteById"
 					]
@@ -309,14 +372,14 @@
 					}
 				},
 				"url": {
-					"raw": "http://localhost:8080/v1/teacher/create",
+					"raw": "http://localhost:8080/admin/teacher/create",
 					"protocol": "http",
 					"host": [
 						"localhost"
 					],
 					"port": "8080",
 					"path": [
-						"v1",
+						"admin",
 						"teacher",
 						"create"
 					]
@@ -326,15 +389,12 @@
 		},
 		{
 			"name": "Login Admin",
-			"protocolProfileBehavior": {
-				"disableBodyPruning": true
-			},
 			"request": {
-				"method": "GET",
+				"method": "POST",
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n    \"username\": \"admin\",\r\n    \"password\": \"admin1234\"\r\n}",
+					"raw": "{\r\n    \"username\": \"admin\",\r\n    \"password\": \"admin123\"\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -358,12 +418,15 @@
 		},
 		{
 			"name": "RefreshToken",
-			"protocolProfileBehavior": {
-				"disableBodyPruning": true
-			},
 			"request": {
-				"method": "GET",
-				"header": [],
+				"method": "POST",
+				"header": [
+					{
+						"key": "refresh-Token",
+						"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImFkbWluIiwicm9sZSI6MCwiZXhwIjoxNzM2NDI0MTI4fQ.YigaDQvHMh3Iz7zg4MouOfmh-RMKTMIomnJs21iISV4",
+						"type": "text"
+					}
+				],
 				"body": {
 					"mode": "raw",
 					"raw": "{\r\n    \"username\": \"admin\",\r\n    \"password\": \"admin1234\"\r\n}",
@@ -374,7 +437,7 @@
 					}
 				},
 				"url": {
-					"raw": "http://localhost:8080/admin/login",
+					"raw": "http://localhost:8080/admin/refreshToken",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -382,7 +445,14 @@
 					"port": "8080",
 					"path": [
 						"admin",
-						"login"
+						"refreshToken"
+					],
+					"query": [
+						{
+							"key": "",
+							"value": null,
+							"disabled": true
+						}
 					]
 				}
 			},
@@ -391,8 +461,33 @@
 		{
 			"name": "Logout Admin",
 			"request": {
-				"method": "GET",
-				"header": []
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImFkbWluIiwicm9sZSI6MCwiZXhwIjoxNzM2NDEzNDc5fQ.3UXMdPBckfivqDSgqxtncMRWbSUf8Pfkuy7f_mqagAI",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "http://localhost:8080/admin/logout",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"admin",
+						"logout"
+					],
+					"query": [
+						{
+							"key": "",
+							"value": null,
+							"disabled": true
+						}
+					]
+				}
 			},
 			"response": []
 		},
@@ -400,16 +495,22 @@
 			"name": "Get Teachers",
 			"request": {
 				"method": "GET",
-				"header": [],
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImFkbWluIiwicm9sZSI6MCwiZXhwIjoxNzM2NDE5ODEzfQ.zxIhIcQ5UggcqLbVzRenLTv7vijFcMw-fYcttzcg0e0",
+						"type": "text"
+					}
+				],
 				"url": {
-					"raw": "http://localhost:8080/v1/teacher/getAll",
+					"raw": "http://localhost:8080/admin/teacher/getAll",
 					"protocol": "http",
 					"host": [
 						"localhost"
 					],
 					"port": "8080",
 					"path": [
-						"v1",
+						"admin",
 						"teacher",
 						"getAll"
 					]
@@ -419,11 +520,8 @@
 		},
 		{
 			"name": "Login Teacher",
-			"protocolProfileBehavior": {
-				"disableBodyPruning": true
-			},
 			"request": {
-				"method": "GET",
+				"method": "POST",
 				"header": [],
 				"body": {
 					"mode": "raw",
@@ -435,14 +533,13 @@
 					}
 				},
 				"url": {
-					"raw": "http://localhost:8080/v1/teacher/login",
+					"raw": "http://localhost:8080/teacher/login",
 					"protocol": "http",
 					"host": [
 						"localhost"
 					],
 					"port": "8080",
 					"path": [
-						"v1",
 						"teacher",
 						"login"
 					]
@@ -460,7 +557,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n    \"name\" : \"AAAA\"\r\n}",
+					"raw": "{\r\n    \"name\" : \"BBBB\"\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -468,14 +565,14 @@
 					}
 				},
 				"url": {
-					"raw": "http://localhost:8080/v1/teacher/getById",
+					"raw": "http://localhost:8080/admin/teacher/getById",
 					"protocol": "http",
 					"host": [
 						"localhost"
 					],
 					"port": "8080",
 					"path": [
-						"v1",
+						"admin",
 						"teacher",
 						"getById"
 					]
