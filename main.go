@@ -18,6 +18,9 @@ func main() {
 	// init mongo
 	services.InitMongoDB()
 
+	//init data
+	services.InitializeRepository()
+
 	// config API
 	routes.InitGin()
 	router := routes.ConfigRoute()

@@ -5,15 +5,19 @@ import (
 	"strings"
 	"studenent_manager/models"
 	"studenent_manager/models/db"
+	"studenent_manager/models/repository"
+	"studenent_manager/models/schemas"
 	"studenent_manager/services"
 
 	"github.com/gin-gonic/gin"
+	"github.com/kamva/mgm/v3"
+	"go.mongodb.org/mongo-driver/bson"
 )
 
 func CreateTeacher(c *gin.Context) {
 	// Gán giá trị mặc định cho trường Role
 	// cần check class id
-	var requestBody db.Teacher
+	var requestBody schemas.RequestTeacher
 	_ = c.ShouldBindJSON(&requestBody)
 	requestBody.Name = strings.TrimSpace(requestBody.Name)
 
@@ -22,10 +26,7 @@ func CreateTeacher(c *gin.Context) {
 		Success:    false,
 	}
 
-	teacherId := services.GenerateTeacherID()
-
-	teacher, err := services.CreateTeacher(teacherId, requestBody.Name, requestBody.ClassIds,
-		requestBody.BirthDay, requestBody.Username, requestBody.Password)
+	teacher, err := services.CreateTeacher(requestBody)
 	if err != nil {
 		response.Message = err.Error()
 		response.SendResponse(c)
@@ -42,8 +43,8 @@ func CreateTeacher(c *gin.Context) {
 
 func GetTeachers(c *gin.Context) {
 	response := &models.Response{
-		StatusCode: http.StatusOK,
-		Success:    true,
+		StatusCode: http.StatusBadRequest,
+		Success:    false,
 	}
 
 	teachers, err := services.GetTeachers()
@@ -70,6 +71,7 @@ func GetTeacher(c *gin.Context) {
 	var requestBody struct {
 		Name string `json:"name"`
 	}
+
 	_ = c.ShouldBindJSON(&requestBody)
 
 	teacher, err := services.GetTeacher(requestBody.Name)
@@ -88,16 +90,15 @@ func GetTeacher(c *gin.Context) {
 }
 
 func UpdateTeacher(c *gin.Context) {
-	var requestBody db.Teacher
+	var requestBody *schemas.UpdateTeacher
 	_ = c.ShouldBindJSON(&requestBody)
-	requestBody.Name = strings.TrimSpace(requestBody.Name)
 
 	response := &models.Response{
-		StatusCode: http.StatusOK,
-		Success:    true,
+		StatusCode: http.StatusBadRequest,
+		Success:    false,
 	}
 
-	teacher, err := services.UpdateTeacher(requestBody.TeacherID, requestBody.Name, requestBody.ClassIds, requestBody.BirthDay)
+	teacher, err := services.UpdateTeacher(requestBody)
 	if err != nil {
 		response.StatusCode = http.StatusNotFound
 		response.Success = false
@@ -114,9 +115,10 @@ func UpdateTeacher(c *gin.Context) {
 
 func DeleteTeacher(c *gin.Context) {
 	response := &models.Response{
-		StatusCode: http.StatusOK,
-		Success:    true,
+		StatusCode: http.StatusBadRequest,
+		Success:    false,
 	}
+
 	var requestBody struct {
 		TeacherID int `json:"teacher_id"`
 	}
@@ -136,29 +138,66 @@ func DeleteTeacher(c *gin.Context) {
 }
 
 func LoginTeacher(c *gin.Context) {
-	var requestBody struct {
-		Username string `json:"username"`
-		Password string `json:"password"`
-	}
+	var requestBody *schemas.UpdateTeacher
+	_ = c.ShouldBindJSON(&requestBody)
 
-	if err := c.ShouldBindJSON(&requestBody); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	teacher, err := repository.NewMongoTeacherRepository().FindByName(requestBody.Username)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	errLogin := services.LoginTeacher(requestBody.Username, requestBody.Password)
-	if errLogin != nil {
-		c.JSON(http.StatusNotFound, gin.H{"message": "Login Fail"})
+	// Compare the hashed password
+	isComparePassword := services.ComparePasswords(teacher.Password, requestBody.Password)
+	if !isComparePassword {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to store session"})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Login successful"})
+	// Generate a JWT token
+	session, err := services.GenerateJWTToken(requestBody.Username, db.AdminRole)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Save session to MongoDB
+	err = mgm.Coll(session).Create(session)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to store session"})
+		return
+	}
+
+	// Return token in response
+	c.JSON(http.StatusOK, gin.H{
+		"message":      "Logged in successfully",
+		"tokenAccess":  session.AccessToken,
+		"tokenRefresh": session.RefreshToken,
+	})
 }
 
 func LogoutTeacher(c *gin.Context) {
-	// Clear the token cookie
-	c.SetCookie("token", "", -1, "/", "", false, true)
+	// Get token from Authorization header
+	accessToken := c.GetHeader("Authorization")
+	if accessToken == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Authorization header is required"})
+		return
+	}
 
-	// Return success response
+	// Delete session from MongoDB
+	result, err := mgm.Coll(&db.Token{}).DeleteOne(mgm.Ctx(), bson.M{
+		"access_token": accessToken,
+	})
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to logout"})
+		return
+	}
+
+	if result.DeletedCount == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Session not found"})
+		return
+	}
+
 	c.JSON(http.StatusOK, gin.H{"message": "Logged out successfully"})
 }

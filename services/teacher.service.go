@@ -3,16 +3,33 @@ package services
 import (
 	"errors"
 	"log"
+	"strings"
 	db "studenent_manager/models/db"
+	"studenent_manager/models/schemas"
 
 	"github.com/kamva/mgm/v3"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func CreateTeacher(teacherId int, name string, classIds []int, birthDay string, userName string, password string) (*db.Teacher, error) {
-	teacher := db.CreateTeacher(teacherId, name, classIds, birthDay, userName, password)
-	err := mgm.Coll(teacher).Create(teacher)
+func CreateTeacher(data schemas.RequestTeacher) (*db.Teacher, error) {
+
+	teacherId := GenerateTeacherID()
+
+	isUserNameExist := checkUserNameTeacher(data.Username)
+	if !isUserNameExist {
+		return nil, errors.New("UserName is exist")
+	}
+
+	hashPassword, err := HashPassword(data.Password)
+	if err != nil {
+		return nil, errors.New("cannot hash password")
+	}
+
+	teacher := db.CreateTeacher(teacherId, data.Name, nil, data.BirthDay, data.Username, hashPassword)
+
+	err = mgm.Coll(teacher).Create(teacher)
 
 	if err != nil {
 		return nil, errors.New("cannot create new teacher")
@@ -42,9 +59,11 @@ func GetTeacher(teacherName string) (*db.Teacher, error) {
 	return teacher, nil
 }
 
-func UpdateTeacher(teacherId int, name string, classIds []int, birthDay string) (*db.Teacher, error) {
+func UpdateTeacher(data *schemas.UpdateTeacher) (*db.Teacher, error) {
 	teacher := &db.Teacher{}
-	err := mgm.Coll(teacher).First(bson.M{"teacher_id": teacherId}, teacher)
+	teacherName := strings.TrimSpace(data.Name)
+
+	err := mgm.Coll(teacher).First(bson.M{"teacher_id": data.TeacherID}, teacher)
 	if err != nil {
 		if err == mgm.Ctx().Err() {
 			return nil, errors.New("teacher not found")
@@ -52,9 +71,9 @@ func UpdateTeacher(teacherId int, name string, classIds []int, birthDay string) 
 		return nil, errors.New("cannot get teacher")
 	}
 
-	teacher.Name = name
-	teacher.ClassIds = classIds
-	teacher.BirthDay = birthDay
+	teacher.Name = teacherName
+	teacher.ClassIds = data.ClassIDs
+	teacher.BirthDay = data.BirthDay
 
 	err = mgm.Coll(teacher).Update(teacher)
 	if err != nil {
@@ -62,7 +81,7 @@ func UpdateTeacher(teacherId int, name string, classIds []int, birthDay string) 
 	}
 
 	updatedTeacher := &db.Teacher{}
-	err = mgm.Coll(updatedTeacher).First(bson.M{"teacher_id": teacherId}, updatedTeacher)
+	err = mgm.Coll(updatedTeacher).First(bson.M{"teacher_id": data.TeacherID}, updatedTeacher)
 	if err != nil {
 		return nil, errors.New("cannot fetch updated teacher")
 	}
@@ -107,4 +126,18 @@ func LoginTeacher(userName string, password string) error {
 	}
 
 	return nil
+}
+
+func checkUserNameTeacher(username string) bool {
+	// Get the default collection for the User model
+	collection := mgm.Coll(&db.Teacher{})
+
+	// Count documents with the given username
+	filter := bson.M{"user_name": username}
+	count, err := collection.CountDocuments(mgm.Ctx(), filter, options.Count())
+	if err != nil {
+		return false
+	}
+
+	return count == 0
 }

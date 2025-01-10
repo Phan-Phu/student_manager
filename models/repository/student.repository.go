@@ -1,11 +1,14 @@
 package repository
 
 import (
+	"context"
 	"errors"
 	"studenent_manager/models/db"
 
 	"github.com/kamva/mgm/v3"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type StudentRepository interface {
@@ -69,4 +72,50 @@ func (r *MongoStudentRepository) FindAll() ([]*db.Student, error) {
 		return nil, errors.New("failed to retrieve students")
 	}
 	return students, nil
+}
+
+func (r *MongoStudentRepository) FindByFindOptions(findOptions *options.FindOptions) ([]db.Student, error) {
+	var students []db.Student
+	err := mgm.Coll(&db.Student{}).SimpleFind(&students, bson.M{}, findOptions)
+	if err != nil {
+		return nil, errors.New("cannot find student")
+	}
+	return students, nil
+}
+
+func (r *MongoStudentRepository) Count() (int64, error) {
+	total, err := mgm.Coll(&db.Student{}).CountDocuments(mgm.Ctx(), bson.M{})
+	if err != nil {
+		return 0, errors.New("not Count student")
+	}
+	return total, nil
+}
+
+func CreateIndexingByStudentID() error {
+	indexModel := mongo.IndexModel{
+		Keys:    bson.D{{Key: "student_id", Value: 1}},
+		Options: options.Index().SetUnique(true),
+	}
+
+	_, err := mgm.Coll(&db.Student{}).Indexes().CreateMany(context.Background(), []mongo.IndexModel{indexModel})
+	return err
+}
+
+func CreateIndexingByStudentName() error {
+	indexModel := mongo.IndexModel{
+		Keys: bson.D{{Key: "name", Value: 1}},
+		//Options: options.Index().SetUnique(true),
+	}
+
+	_, err := mgm.Coll(&db.Student{}).Indexes().CreateMany(context.Background(), []mongo.IndexModel{indexModel})
+	return err
+}
+
+func (r *MongoStudentRepository) FindByName(name string) (*db.Student, error) {
+	student := &db.Student{}
+	err := mgm.Coll(student).First(bson.M{"name": name}, student)
+	if err != nil {
+		return nil, err
+	}
+	return student, nil
 }

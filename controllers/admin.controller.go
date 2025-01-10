@@ -31,39 +31,11 @@ func LoginAdmin(c *gin.Context) {
 		return
 	}
 
-	accessExpiresAt := time.Now().Add(time.Duration(services.Config.JWTAccessExpirationMinutes) * time.Minute)
-	accessClaims := &db.Claims{
-		Username: account.Username,
-		Role:     db.AdminRole,
-		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: accessExpiresAt.Unix(),
-		},
-	}
-
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, accessClaims)
-	accessTokenString, err := token.SignedString([]byte("access-token"))
+	session, err := services.GenerateJWTToken(account.Username, db.AdminRole)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-
-	refreshExpiresAt := time.Now().Add(time.Duration(services.Config.JWTRefreshExpirationDays) * time.Hour)
-	refreshClaims := &db.Claims{
-		Username: account.Username,
-		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: refreshExpiresAt.Unix(),
-		},
-	}
-
-	refreshToken := jwt.NewWithClaims(jwt.SigningMethodHS256, refreshClaims)
-	refreshTokenString, err := refreshToken.SignedString([]byte("refresh-token"))
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
-
-	// Create session document to store in MongoDB
-	session := db.NewToken(accessTokenString, refreshTokenString, db.AdminRole, accessExpiresAt, refreshExpiresAt)
 
 	// Save session to MongoDB
 	err = mgm.Coll(session).Create(session)
@@ -75,8 +47,8 @@ func LoginAdmin(c *gin.Context) {
 	// Return token in response
 	c.JSON(http.StatusOK, gin.H{
 		"message":      "Logged in successfully",
-		"tokenAccess":  accessTokenString,
-		"tokenRefresh": refreshTokenString,
+		"tokenAccess":  session.AccessToken,
+		"tokenRefresh": session.RefreshToken,
 	})
 }
 

@@ -47,17 +47,27 @@ func GetStudents(c *gin.Context) {
 		Success:    false,
 	}
 
-	students, err := services.GetStudents()
+	var requestBody *schemas.PaginationRequest
+	_ = c.ShouldBindJSON(&requestBody)
+
+	result, err := services.GetStudentsWithPagination(requestBody)
+
 	if err != nil {
-		response.StatusCode = http.StatusInternalServerError
-		response.Success = false
 		response.Message = err.Error()
 		response.SendResponse(c)
 		return
 	}
 
+	response.StatusCode = http.StatusOK
+	response.Success = true
 	response.Data = gin.H{
-		"students": students,
+		"students": result.Data,
+		"page":     result.Page,
+		"limit":    result.Limit,
+		"meta_data": gin.H{
+			"total_students": result.Total,
+			"total_pages":    result.TotalPage,
+		},
 	}
 	response.SendResponse(c)
 }

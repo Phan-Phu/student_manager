@@ -9,6 +9,8 @@ import (
 type RequestTeacher struct {
 	Name     string `json:"name"`
 	BirthDay string `json:"birth_day"`
+	Username string `json:"username"`
+	Password string `json:"password"`
 }
 
 // Validate RequestTeacher
@@ -35,9 +37,11 @@ func (r *RequestTeacher) Validate() error {
 type UpdateTeacher struct {
 	TeacherID int    `json:"teacher_id"`
 	Name      string `json:"name"`
-	ClassID   int    `json:"class_id"`
+	ClassIDs  []int  `json:"class_id"`
 	BirthDay  string `json:"birth_day"`
 	Score     int    `json:"score"`
+	Username  string `json:"user_name"`
+	Password  string `json:"password"`
 }
 
 func (u *UpdateTeacher) Validate() error {

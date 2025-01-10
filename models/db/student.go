@@ -12,7 +12,7 @@ type Student struct {
 	Role             Role   `json:"role" bson:"role"` // not input from user
 }
 
-func CreateStudent(studentId int, name string, classID int, birthDay string, score int) *Student {
+func NewStudent(studentId int, name string, classID int, birthDay string, score int) *Student {
 	return &Student{
 		//ID:        primitive.NewObjectID(),
 		StudentID: studentId,

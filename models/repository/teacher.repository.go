@@ -8,7 +8,7 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 )
 
-type teacherRepository interface {
+type TeacherRepository interface {
 	Create(teacher *db.Teacher) error
 	FindByID(teacherID int) (*db.Teacher, error)
 	Update(teacher *db.Teacher) error
@@ -16,17 +16,17 @@ type teacherRepository interface {
 	FindAll() ([]*db.Teacher, error)
 }
 
-type MongoteacherRepository struct {
+type MongoTeacherRepository struct {
 	collection *mgm.Collection
 }
 
-func NewMongoteacherRepository() *MongoteacherRepository {
-	return &MongoteacherRepository{
+func NewMongoTeacherRepository() *MongoTeacherRepository {
+	return &MongoTeacherRepository{
 		collection: mgm.Coll(&db.Teacher{}),
 	}
 }
 
-func (r *MongoteacherRepository) Create(teacher *db.Teacher) error {
+func (r *MongoTeacherRepository) Create(teacher *db.Teacher) error {
 	if err := r.collection.Create(teacher); err != nil {
 		return errors.New("failed to create teacher")
 	}
@@ -34,7 +34,7 @@ func (r *MongoteacherRepository) Create(teacher *db.Teacher) error {
 }
 
 // FindByID retrieves a teacher by their teacherID
-func (r *MongoteacherRepository) FindByID(teacherID int) (*db.Teacher, error) {
+func (r *MongoTeacherRepository) FindByID(teacherID int) (*db.Teacher, error) {
 	teacher := &db.Teacher{}
 	err := mgm.Coll(teacher).First(bson.M{"teacher_id": teacherID}, teacher)
 	if err != nil {
@@ -44,7 +44,7 @@ func (r *MongoteacherRepository) FindByID(teacherID int) (*db.Teacher, error) {
 }
 
 // Update modifies an existing teacher's data
-func (r *MongoteacherRepository) Update(teacher *db.Teacher) error {
+func (r *MongoTeacherRepository) Update(teacher *db.Teacher) error {
 	if err := r.collection.Update(teacher); err != nil {
 		return errors.New("failed to update teacher")
 	}
@@ -52,7 +52,7 @@ func (r *MongoteacherRepository) Update(teacher *db.Teacher) error {
 }
 
 // Delete removes a teacher from the database
-func (r *MongoteacherRepository) Delete(teacherID int) error {
+func (r *MongoTeacherRepository) Delete(teacherID int) error {
 	teacher, err := r.FindByID(teacherID)
 	if err != nil {
 		return err
@@ -63,10 +63,19 @@ func (r *MongoteacherRepository) Delete(teacherID int) error {
 	return nil
 }
 
-func (r *MongoteacherRepository) FindAll() ([]*db.Teacher, error) {
+func (r *MongoTeacherRepository) FindAll() ([]*db.Teacher, error) {
 	var teachers []*db.Teacher
 	if err := r.collection.SimpleFind(&teachers, bson.M{}); err != nil {
 		return nil, errors.New("failed to retrieve teachers")
 	}
 	return teachers, nil
+}
+
+func (r *MongoTeacherRepository) FindByName(userName string) (*db.Teacher, error) {
+	teacher := &db.Teacher{}
+	err := mgm.Coll(teacher).First(bson.M{"name": userName}, teacher)
+	if err != nil {
+		return nil, err
+	}
+	return teacher, nil
 }
