@@ -5,12 +5,14 @@ import (
 	"regexp"
 
 	"github.com/golang-jwt/jwt"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type Account struct {
-	Username string `json:"username"` // unique
-	Password string `json:"password"`
-	Role     Role   `json:"role"`
+	ID       primitive.ObjectID `json:"_id"`      // unique
+	Username string             `json:"username"` // unique
+	Password string             `json:"password"`
+	Role     Role               `json:"role"`
 }
 
 type RequestAccount struct {
@@ -42,7 +44,8 @@ func (a *RequestAccount) Validate() error {
 	return nil
 }
 
-type Claims struct {
+type ResponseAccount struct {
+	UserId   string `json:"user_id"`
 	Username string `json:"username"`
 	Role     Role   `json:"role"`
 	jwt.StandardClaims

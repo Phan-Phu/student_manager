@@ -9,6 +9,7 @@ import (
 type RequestStudent struct {
 	Name     string `json:"name"`
 	ClassID  int    `json:"class_id"`
+	Age      int    `json:"age"`
 	BirthDay string `json:"birth_day"`
 }
 
@@ -38,22 +39,23 @@ func (r *RequestStudent) Validate() error {
 }
 
 type UpdateScoreStudent struct {
-	StudentID int `json:"student_id"`
-	Score     int `json:"score"`
+	StudentID string `json:"_id"`
+	Score     int    `json:"score"`
 }
 
 type UpdateStudent struct {
-	StudentID int    `json:"student_id"`
+	StudentID string `json:"_id"`
 	Name      string `json:"name"`
 	ClassID   int    `json:"class_id"`
 	BirthDay  string `json:"birth_day"`
+	Age       int    `json:"age"`
 	Score     int    `json:"score"`
 }
 
 func (u *UpdateStudent) Validate() error {
-	if u.StudentID <= 0 {
-		return errors.New("invalid student_id")
-	}
+	// if u.StudentID <= 0 {
+	// 	return errors.New("invalid student_id")
+	// }
 
 	_, err := time.Parse("02-01-2006", u.BirthDay)
 	if err != nil {
@@ -68,9 +70,9 @@ func (u *UpdateStudent) Validate() error {
 }
 
 func (u *UpdateScoreStudent) Validate() error {
-	if u.StudentID <= 0 {
-		return errors.New("invalid student_id")
-	}
+	// if u.StudentID <= 0 {
+	// 	return errors.New("invalid student_id")
+	// }
 
 	if u.Score < 0 || u.Score > 100 {
 		return errors.New("score must be between 0 and 100")
@@ -80,12 +82,12 @@ func (u *UpdateScoreStudent) Validate() error {
 }
 
 type DeleteStudent struct {
-	StudentID int `json:"student_id"`
+	StudentID string `json:"_id"`
 }
 
 func (d *DeleteStudent) Validate() error {
-	if d.StudentID <= 0 {
-		return errors.New("invalid student_id")
-	}
+	// if d.StudentID <= 0 {
+	// 	return errors.New("invalid student_id")
+	// }
 	return nil
 }

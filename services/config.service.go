@@ -2,13 +2,11 @@ package services
 
 import (
 	database "studenent_manager/models"
-	"studenent_manager/models/repository"
 
 	"github.com/spf13/viper"
 )
 
 var Config *database.Config
-var StudentRepository *repository.MongoStudentRepository
 
 func LoadConfig() {
 	v := viper.New()
@@ -33,7 +31,5 @@ func LoadConfig() {
 }
 
 func InitializeRepository() {
-	StudentRepository = repository.NewMongoStudentRepository()
-	//repository.CreateIndexingByStudentID()
-	repository.CreateIndexingByStudentName()
+	InitializeStudentRepository()
 }

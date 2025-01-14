@@ -10,9 +10,11 @@ import (
 	"github.com/golang-jwt/jwt"
 	"github.com/kamva/mgm/v3"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 var adminAccount = db.Account{
+	ID:       primitive.NewObjectID(),
 	Username: "admin",
 	Password: "admin123",
 	Role:     db.AdminRole,
@@ -31,24 +33,17 @@ func LoginAdmin(c *gin.Context) {
 		return
 	}
 
-	session, err := services.GenerateJWTToken(account.Username, db.AdminRole)
+	data, err := services.GenerateJWTToken(adminAccount.ID.Hex(), account.Username, db.AdminRole)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	// Save session to MongoDB
-	err = mgm.Coll(session).Create(session)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to store session"})
-		return
-	}
-
-	// Return token in response
+	// Return token in responses
 	c.JSON(http.StatusOK, gin.H{
 		"message":      "Logged in successfully",
-		"tokenAccess":  session.AccessToken,
-		"tokenRefresh": session.RefreshToken,
+		"tokenAccess":  data.AccessToken,
+		"tokenRefresh": data.RefreshToken,
 	})
 }
 
@@ -61,7 +56,7 @@ func RefreshToken(c *gin.Context) {
 	}
 
 	// Validate refresh token
-	claims := &db.Claims{}
+	claims := &db.ResponseAccount{}
 	token, err := jwt.ParseWithClaims(refreshTokenString, claims, func(token *jwt.Token) (interface{}, error) {
 		return []byte("refresh-token"), nil
 	})
@@ -87,7 +82,8 @@ func RefreshToken(c *gin.Context) {
 
 	// Create new access token
 	accessExpiresAt := time.Now().Add(30 * time.Minute)
-	accessClaims := &db.Claims{
+	accessClaims := &db.ResponseAccount{
+		UserId:   claims.UserId,
 		Username: claims.Username,
 		Role:     claims.Role,
 		StandardClaims: jwt.StandardClaims{

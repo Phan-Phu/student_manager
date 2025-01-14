@@ -25,8 +25,8 @@ func CreateStudent(c *gin.Context) {
 		response.SendResponse(c)
 		return
 	}
-	requestBody.Name = strings.TrimSpace(requestBody.Name)
-	student, err := services.CreateStudent(requestBody)
+
+	student, err := services.StudentService.CreateStudent(requestBody)
 	if err != nil {
 		response.Message = err.Error()
 		response.SendResponse(c)
@@ -50,7 +50,7 @@ func GetStudents(c *gin.Context) {
 	var requestBody *schemas.PaginationRequest
 	_ = c.ShouldBindJSON(&requestBody)
 
-	result, err := services.GetStudentsWithPagination(requestBody)
+	paginationResponse, students, err := services.StudentService.GetStudentsWithPagination(requestBody)
 
 	if err != nil {
 		response.Message = err.Error()
@@ -61,12 +61,12 @@ func GetStudents(c *gin.Context) {
 	response.StatusCode = http.StatusOK
 	response.Success = true
 	response.Data = gin.H{
-		"students": result.Data,
-		"page":     result.Page,
-		"limit":    result.Limit,
-		"meta_data": gin.H{
-			"total_students": result.Total,
-			"total_pages":    result.TotalPage,
+		"students": students.Data,
+		"pagination": gin.H{
+			"page":           paginationResponse.Page,
+			"limit":          paginationResponse.Limit,
+			"total_students": paginationResponse.Total,
+			"total_pages":    paginationResponse.TotalPage,
 		},
 	}
 	response.SendResponse(c)
@@ -83,7 +83,8 @@ func GetStudent(c *gin.Context) {
 	}
 	_ = c.ShouldBindJSON(&requestBody)
 
-	student, err := services.GetStudent(requestBody.Name)
+	student, err := services.StudentService.GetStudent(requestBody.Name)
+
 	if err != nil {
 		response.StatusCode = http.StatusNotFound
 		response.Success = false
@@ -108,7 +109,7 @@ func UpdateStudent(c *gin.Context) {
 		Success:    true,
 	}
 
-	student, err := services.UpdateStudent(requestBody)
+	student, err := services.StudentService.UpdateStudent(requestBody)
 	if err != nil {
 		response.StatusCode = http.StatusNotFound
 		response.Success = false
@@ -132,7 +133,7 @@ func UpdateScore(c *gin.Context) {
 		Success:    true,
 	}
 
-	student, err := services.UpdateScore(requestBody)
+	student, err := services.StudentService.UpdateScore(requestBody)
 	if err != nil {
 		response.StatusCode = http.StatusNotFound
 		response.Success = false
@@ -153,11 +154,11 @@ func DeleteStudent(c *gin.Context) {
 		Success:    true,
 	}
 	var requestBody struct {
-		StudentID int `json:"student_id"`
+		StudentID string `json:"_id"`
 	}
 	_ = c.ShouldBindJSON(&requestBody)
 
-	err := services.DeleteStudent(requestBody)
+	err := services.StudentService.DeleteStudent(requestBody)
 	if err != nil {
 		response.StatusCode = http.StatusNotFound
 		response.Success = false

@@ -1,22 +1,26 @@
 package repository
 
 import (
-	"context"
 	"errors"
 	"studenent_manager/models/db"
 
 	"github.com/kamva/mgm/v3"
 	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-type StudentRepository interface {
+type StudentRepositoryInteface interface {
 	Create(student *db.Student) error
-	FindByID(studentID int) (*db.Student, error)
+	FindByID(studentID string) (*db.Student, error)
 	Update(student *db.Student) error
-	Delete(studentID int) error
+	Delete(studentID string) error
 	FindAll() ([]*db.Student, error)
+	FindByFindOptions(findOptions *options.FindOptions) ([]db.Student, error)
+	Count() (int64, error)
+	FindByName(name string) (*db.Student, error)
+	CreateMany(students []interface{}) error
+	DeleteMany(students []interface{}) error
 }
 
 type MongoStudentRepository struct {
@@ -36,10 +40,30 @@ func (r *MongoStudentRepository) Create(student *db.Student) error {
 	return nil
 }
 
+func (r *MongoStudentRepository) CreateMany(students []interface{}) error {
+	_, err := r.collection.InsertMany(mgm.Ctx(), students)
+	if err != nil {
+		return errors.New("failed to create student")
+	}
+	return nil
+}
+
+func (r *MongoStudentRepository) DeleteMany(students []interface{}) error {
+	_, err := r.collection.DeleteMany(mgm.Ctx(), students)
+	if err != nil {
+		return errors.New("failed to create student")
+	}
+	return nil
+}
+
 // FindByID retrieves a student by their StudentID
-func (r *MongoStudentRepository) FindByID(studentID int) (*db.Student, error) {
+func (r *MongoStudentRepository) FindByID(studentID string) (*db.Student, error) {
 	student := &db.Student{}
-	err := mgm.Coll(student).First(bson.M{"student_id": studentID}, student)
+	objID, err := primitive.ObjectIDFromHex(studentID)
+	if err != nil {
+		return nil, err
+	}
+	err = mgm.Coll(student).First(bson.M{"_id": objID}, student)
 	if err != nil {
 		return nil, err
 	}
@@ -55,7 +79,7 @@ func (r *MongoStudentRepository) Update(student *db.Student) error {
 }
 
 // Delete removes a student from the database
-func (r *MongoStudentRepository) Delete(studentID int) error {
+func (r *MongoStudentRepository) Delete(studentID string) error {
 	student, err := r.FindByID(studentID)
 	if err != nil {
 		return err
@@ -89,26 +113,6 @@ func (r *MongoStudentRepository) Count() (int64, error) {
 		return 0, errors.New("not Count student")
 	}
 	return total, nil
-}
-
-func CreateIndexingByStudentID() error {
-	indexModel := mongo.IndexModel{
-		Keys:    bson.D{{Key: "student_id", Value: 1}},
-		Options: options.Index().SetUnique(true),
-	}
-
-	_, err := mgm.Coll(&db.Student{}).Indexes().CreateMany(context.Background(), []mongo.IndexModel{indexModel})
-	return err
-}
-
-func CreateIndexingByStudentName() error {
-	indexModel := mongo.IndexModel{
-		Keys: bson.D{{Key: "name", Value: 1}},
-		//Options: options.Index().SetUnique(true),
-	}
-
-	_, err := mgm.Coll(&db.Student{}).Indexes().CreateMany(context.Background(), []mongo.IndexModel{indexModel})
-	return err
 }
 
 func (r *MongoStudentRepository) FindByName(name string) (*db.Student, error) {

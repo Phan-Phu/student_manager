@@ -24,12 +24,12 @@ func StudentRoute(router *gin.RouterGroup) {
 			controllers.GetStudent,
 		)
 
-		auth.POST(
+		auth.PUT(
 			"/update",
 			controllers.UpdateStudent,
 		)
 
-		auth.POST(
+		auth.PATCH(
 			"/updateScore",
 			controllers.UpdateScore,
 		)

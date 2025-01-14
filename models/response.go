@@ -35,3 +35,5 @@ func SendErrorResponse(c *gin.Context, status int, message string) {
 	}
 	response.SendResponse(c)
 }
+
+// sua user name thanh user id

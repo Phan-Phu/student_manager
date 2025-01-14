@@ -30,9 +30,9 @@ func main() {
 	// config server
 	server := &http.Server{
 		Addr:         services.Config.ServerAddr + ":" + services.Config.ServerPort,
-		WriteTimeout: time.Second * 30,
-		ReadTimeout:  time.Second * 30,
-		IdleTimeout:  time.Second * 30,
+		WriteTimeout: time.Second * 300,
+		ReadTimeout:  time.Second * 300,
+		IdleTimeout:  time.Second * 300,
 		Handler:      router,
 	}
 

@@ -1,25 +1,24 @@
 package db
 
-import "github.com/kamva/mgm/v3"
+import (
+	"github.com/kamva/mgm/v3"
+)
 
 type Student struct {
 	mgm.DefaultModel `bson:",inline"`
-	StudentID        int    `json:"student_id" bson:"student_id"`
-	Name             string `json:"name" bson:"name"`
-	ClassID          int    `json:"class_id" bson:"class_id"`
-	BirthDay         string `json:"birth_day" bson:"birth_day"`
-	Score            int    `json:"score" bson:"score"`
-	Role             Role   `json:"role" bson:"role"` // not input from user
+	Name             string `bson:"name"`
+	Age              int    `bson:"age"`
+	ClassID          int    `bson:"class_id"`
+	BirthDay         string `bson:"birth_day"`
+	Score            int    `bson:"score"`
 }
 
-func NewStudent(studentId int, name string, classID int, birthDay string, score int) *Student {
+func NewStudent(name string, classID int, birthDay string, age int, score int) *Student {
 	return &Student{
-		//ID:        primitive.NewObjectID(),
-		StudentID: studentId,
-		Name:      name,
-		ClassID:   classID,
-		BirthDay:  birthDay,
-		Score:     score,
-		Role:      StudentRole,
+		Name:     name,
+		ClassID:  classID,
+		Age:      age,
+		BirthDay: birthDay,
+		Score:    score,
 	}
 }

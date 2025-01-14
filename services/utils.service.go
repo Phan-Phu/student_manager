@@ -1,10 +1,16 @@
 package services
 
 import (
+	"context"
+	"log"
 	db "studenent_manager/models/db"
 	"time"
 
 	"github.com/golang-jwt/jwt"
+	"github.com/kamva/mgm/v3"
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -22,9 +28,10 @@ func ComparePasswords(hashedPassword, plainPassword string) bool {
 	return err == nil
 }
 
-func GenerateJWTToken(userName string, role db.Role) (*db.Token, error) {
+func GenerateJWTToken(userId string, userName string, role db.Role) (*db.Token, error) {
 	accessExpiresAt := time.Now().Add(time.Duration(Config.JWTAccessExpirationMinutes) * time.Minute)
-	accessClaims := &db.Claims{
+	accessClaims := &db.ResponseAccount{
+		UserId:   userId,
 		Username: userName,
 		Role:     role,
 		StandardClaims: jwt.StandardClaims{
@@ -39,7 +46,8 @@ func GenerateJWTToken(userName string, role db.Role) (*db.Token, error) {
 	}
 
 	refreshExpiresAt := time.Now().Add(time.Duration(Config.JWTRefreshExpirationDays) * time.Hour)
-	refreshClaims := &db.Claims{
+	refreshClaims := &db.ResponseAccount{
+		UserId:   accessClaims.UserId,
 		Username: userName,
 		Role:     role,
 		StandardClaims: jwt.StandardClaims{
@@ -55,5 +63,29 @@ func GenerateJWTToken(userName string, role db.Role) (*db.Token, error) {
 
 	session := db.NewToken(accessTokenString, refreshTokenString, db.AdminRole, accessExpiresAt, refreshExpiresAt)
 
+	refreshIndexModel := mongo.IndexModel{
+		Keys:    bson.D{{Key: "refresh_expires_at", Value: "hashed"}},
+		Options: options.Index().SetExpireAfterSeconds(int32(Config.JWTRefreshExpirationDays)),
+	}
+
+	_, err = mgm.Coll(&db.Token{}).Indexes().CreateMany(context.Background(), []mongo.IndexModel{refreshIndexModel})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Save session to MongoDB
+	err = mgm.Coll(session).Create(session)
+	if err != nil {
+		return nil, err
+	}
+
 	return session, nil
+}
+
+func ValidateJWTToken(token string) (*db.ResponseAccount, error) {
+	response := &db.ResponseAccount{}
+	_, err := jwt.ParseWithClaims(token, response, func(token *jwt.Token) (interface{}, error) {
+		return []byte(Config.JWTSecretKey), nil
+	})
+	return response, err
 }

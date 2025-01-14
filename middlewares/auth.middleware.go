@@ -3,10 +3,10 @@ package middlewares
 import (
 	"net/http"
 	"studenent_manager/models/db"
+	"studenent_manager/services"
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt"
 	"github.com/kamva/mgm/v3"
 	"go.mongodb.org/mongo-driver/bson"
 )
@@ -31,20 +31,21 @@ func AuthMiddleware() gin.HandlerFunc {
 		}, session)
 
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Error validating token"})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Error token not exist"})
 			c.Abort()
 			return
 		}
 
-		// Validate JWT token
-		claims := &db.Claims{}
-		_, _ = jwt.ParseWithClaims(accessToken, claims, func(token *jwt.Token) (interface{}, error) {
-			return []byte("admin-key"), nil
-		})
+		response, errToken := services.ValidateJWTToken(accessToken)
+		if errToken != nil {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Error validating JWT token"})
+			c.Abort()
+			return
+		}
 
 		// Set claims to context
-		c.Set("claims", claims)
-		c.Set("username", claims.Username)
+		c.Set("username", response.Username)
+		c.Set("userId", response.UserId)
 		c.Next()
 	}
 }

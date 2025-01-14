@@ -155,7 +155,7 @@ func LoginTeacher(c *gin.Context) {
 	}
 
 	// Generate a JWT token
-	session, err := services.GenerateJWTToken(requestBody.Username, db.AdminRole)
+	session, err := services.GenerateJWTToken(teacher.ID.Hex(), requestBody.Username, db.TeacherRole)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

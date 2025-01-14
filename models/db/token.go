@@ -33,7 +33,3 @@ func NewToken(tokenAccess string, tokenRefresh string, role Role, expiresAt time
 func (model *Token) CollectionName() string {
 	return "tokens"
 }
-
-// You can override Collection functions or CRUD hooks
-// https://github.com/Kamva/mgm#a-models-hooks
-// https://github.com/Kamva/mgm#collections
