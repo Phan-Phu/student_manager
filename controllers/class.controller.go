@@ -2,25 +2,23 @@ package controllers
 
 import (
 	"net/http"
-	"strings"
 	"studenent_manager/models"
-	"studenent_manager/models/db"
+	"studenent_manager/models/schemas"
 	"studenent_manager/services"
 
 	"github.com/gin-gonic/gin"
 )
 
 func CreateClass(c *gin.Context) {
-	var requestBody db.Class
+	var requestBody schemas.ClassRequest
 	_ = c.ShouldBindJSON(&requestBody)
-	requestBody.Name = strings.TrimSpace(requestBody.Name)
 
 	response := &models.Response{
 		StatusCode: http.StatusBadRequest,
 		Success:    false,
 	}
 
-	class, err := services.CreateClass(requestBody.Name)
+	class, err := services.CreateClass(requestBody)
 	if err != nil {
 		response.Message = err.Error()
 		response.SendResponse(c)

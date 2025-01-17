@@ -37,9 +37,10 @@ type OldClassEnrollment struct {
 	Data []ClassEnrollment `bson:"data"`
 }
 
-func CreateClass(classId int, name string, createDate string) *Class {
+func CreateClass(classId int, name string, createDate string, maxStudent int) *Class {
 	return &Class{
 		Name:       name,
 		CreateDate: createDate,
+		MaxStudent: maxStudent,
 	}
 }

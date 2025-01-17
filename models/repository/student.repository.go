@@ -16,7 +16,7 @@ import (
 type StudentRepositoryInterface interface {
 	Create(student *db.Student) error
 	FindByID(studentID string) (*db.Student, error)
-	update(student *db.Student) error
+	Update(student *db.Student) error
 	Delete(studentID string) error
 	FindAll() ([]*db.Student, error)
 	FindByFindOptions(findOptions *options.FindOptions) ([]db.Student, error)
@@ -25,7 +25,6 @@ type StudentRepositoryInterface interface {
 	UpdateClass(class db.Class) (*db.Student, error)
 	CreateMany(students []db.Student) error
 	DeleteMany(students []db.Student) error
-	UpdateWithClass() error
 	GetStudentDetails(studentIDString string) ([]*db.Class, error)
 	GetStudentsDetails(studentIdsString []string) (*[]schemas.StudentDetails, error)
 }
@@ -85,7 +84,6 @@ func (r *MongoStudentRepository) FindByID(studentID string) (*db.Student, error)
 	return student, nil
 }
 
-// Update modifies an existing student's data
 func (r *MongoStudentRepository) Update(student *db.Student) error {
 	if err := r.studentCollection.Update(student); err != nil {
 		return errors.New(models.GetErrorMessage(models.ErrorCodeFailCreateStudent))
@@ -160,16 +158,11 @@ func (r *MongoStudentRepository) FindByName(name string) (*db.Student, error) {
 	return student, nil
 }
 
-func (r *MongoStudentRepository) GetStudentDetails(studentIDString string) (*schemas.StudentDetails, error) {
-	studentId, err := primitive.ObjectIDFromHex(studentIDString)
-	if err != nil {
-		return nil, errors.New(models.GetErrorMessage(models.ErrorCodeInputIsWrong))
-	}
-
+func (r *MongoStudentRepository) GetStudentDetails(studentID primitive.ObjectID) (*schemas.StudentDetails, error) {
 	pipeline := bson.A{
 		bson.D{
 			{Key: "$match", Value: bson.D{
-				{Key: "_id", Value: studentId},
+				{Key: "_id", Value: studentID},
 			}},
 		},
 		bson.D{
@@ -213,7 +206,7 @@ func (r *MongoStudentRepository) GetStudentDetails(studentIDString string) (*sch
 	}
 
 	response := &schemas.StudentDetails{
-		StudentID: studentId,
+		StudentID: studentID,
 		Name:      studentResult[0].Name,
 		Class:     *studentResult[0].Class[0],
 		BirthDay:  studentResult[0].BirthDay,
@@ -222,16 +215,7 @@ func (r *MongoStudentRepository) GetStudentDetails(studentIDString string) (*sch
 	return response, nil
 }
 
-func (r *MongoStudentRepository) GetStudentsDetails(studentIdsString []string) ([]schemas.StudentDetails, error) {
-
-	studentIds := []primitive.ObjectID{}
-	for i := 0; i < len(studentIdsString); i++ {
-		studentId, err := primitive.ObjectIDFromHex(studentIdsString[i])
-		if err != nil {
-			return nil, errors.New(models.GetErrorMessage(models.ErrorCodeInputIsWrong))
-		}
-		studentIds = append(studentIds, studentId)
-	}
+func (r *MongoStudentRepository) GetStudentsDetails(studentIds []primitive.ObjectID) ([]schemas.StudentDetails, error) {
 
 	pipeline := bson.A{
 		bson.D{

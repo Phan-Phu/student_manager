@@ -32,4 +32,5 @@ func LoadConfig() {
 
 func InitializeRepository() {
 	InitializeStudentRepository()
+	InitializeClassRepository()
 }

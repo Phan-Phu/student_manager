@@ -2,18 +2,14 @@ package services
 
 import (
 	"errors"
-	"fmt"
 	"math"
 	"studenent_manager/models"
 	db "studenent_manager/models/db"
 	"studenent_manager/models/indexing"
 	"studenent_manager/models/repository"
 	"studenent_manager/models/schemas"
-	"sync"
-	"time"
 
 	"github.com/kamva/mgm/v3"
-	"github.com/thoas/go-funk"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -55,7 +51,7 @@ func (repo *StudentRepoService) CreateStudent(data schemas.RequestStudent) (*sch
 		return nil, errors.New(models.GetErrorMessage(models.ErrorCodeInputIsWrong))
 	}
 
-	class, err := repository.NewMongoClassRepository().FindByID(data.ClassId)
+	class, err := ClassService.FindByID(data.ClassId)
 	if err != nil {
 		return nil, errors.New(models.GetErrorMessage(models.ErrorCodeInputIsWrong))
 	}
@@ -80,96 +76,6 @@ func (repo *StudentRepoService) CreateStudent(data schemas.RequestStudent) (*sch
 	return response, nil
 }
 
-func (repo *StudentRepoService) InsertManyStudentMultiThreads() error {
-	start := time.Now()
-	defer func() {
-		elapsed := time.Since(start)
-		fmt.Printf("InsertManyStudent took %s\n", elapsed)
-	}()
-
-	const totalStudents = 1000000
-	const numThreads = 16
-	batchSize := totalStudents / numThreads
-
-	var wg sync.WaitGroup
-	errChan := make(chan error, numThreads)
-	threadTimes := make([]time.Duration, numThreads)
-
-	// Worker function to process and insert students in batches
-	worker := func(threadID, start, end int) {
-		defer wg.Done()
-
-		threadStart := time.Now()
-
-		students := make([]db.Student, end-start)
-		for i := start; i < end; i++ {
-			// name := fmt.Sprintf("Name%d", i+1)
-			// className := fmt.Sprintf("class %d", i+1)
-			// student := db.NewStudent(name, className, "", 10, 0)
-			// students[i-start] = *student
-		}
-
-		if err := repo.CreateMany(students); err != nil {
-			errChan <- err
-		}
-
-		threadTimes[threadID] = time.Since(threadStart)
-	}
-
-	// Start worker threads
-	for t := 0; t < numThreads; t++ {
-		start := t * batchSize
-		end := start + batchSize
-		if t == numThreads-1 {
-			end = totalStudents // Handle any remainder
-		}
-
-		wg.Add(1)
-		go worker(t, start, end)
-	}
-
-	// Wait for all worker threads to complete
-	wg.Wait()
-	close(errChan)
-
-	// Check for errors
-	for err := range errChan {
-		if err != nil {
-			return errors.New(models.GetErrorMessage(models.ErrorCodeFailCreateStudent) + err.Error())
-		}
-	}
-
-	// Print thread execution times
-	for threadID, threadTime := range threadTimes {
-		fmt.Printf("Thread %d took %s\n", threadID, threadTime)
-	}
-
-	return nil
-}
-
-func (repo *StudentRepoService) InsertManyStudentOneThread() error {
-	start := time.Now()
-
-	students := []db.Student{}
-
-	for i := 0; i < 1000; i++ {
-		// name := fmt.Sprintf("Name%d", i+1)
-		// className := fmt.Sprintf("class %d", i+1)
-		// student := db.NewStudent(name, className, "", 10, 0)
-		// students = append(students, *student)
-	}
-
-	err := repo.CreateMany(students)
-	if err != nil {
-		return fmt.Errorf(models.GetErrorMessage(models.ErrorCodeFailCreateStudent), err)
-	}
-
-	estTime := time.Since(start)
-	fmt.Printf("InsertManyStudentOneThreads took %s\n", estTime)
-
-	return nil
-}
-
 func (repo *StudentRepoService) GetStudents() ([]*db.Student, error) {
 	students, err := repo.FindAll()
 
@@ -184,8 +90,15 @@ func (repo *StudentRepoService) GetStudentsWithPagination(data *schemas.Paginati
 	findOptions.SetSkip((int64(data.Page) - 1) * data.Limit)
 	findOptions.SetLimit(int64(data.Limit))
 
-	students, _ := repo.FindByFindOptions(findOptions)
-	total, _ := repo.Count()
+	students, err := repo.FindByFindOptions(findOptions)
+	if err != nil {
+		return nil, nil, errors.New(models.GetErrorMessage(models.ErrorCodeInputIsWrong))
+	}
+
+	total, err := repo.Count()
+	if err != nil {
+		return nil, nil, errors.New(models.GetErrorMessage(models.ErrorCodeMaxStudentInClass))
+	}
 
 	paginationResponse := &schemas.PaginationResponse{
 		Page:      data.Page,
@@ -194,27 +107,20 @@ func (repo *StudentRepoService) GetStudentsWithPagination(data *schemas.Paginati
 		TotalPage: int(math.Ceil(float64(total) / float64(data.Limit))),
 	}
 
-	studentIDs := funk.Map(students, func(s db.Student) string {
-		return s.ID.Hex()
-	}).([]string)
+	studentIDs := []primitive.ObjectID{}
+	for i := 0; i < len(students); i++ {
+		studentIDs = append(studentIDs, students[i].ID)
+	}
 
 	studentDetails, err := repo.GetStudentsDetails(studentIDs)
 	if err != nil {
 		return nil, nil, errors.New(models.GetErrorMessage(models.ErrorCodeGetStudentDetails))
 	}
 
-	studentResponses := funk.Map(studentDetails, func(s schemas.StudentDetails) schemas.StudentResponse {
-		return *schemas.MapStudentDetailToStudentResponse(&s)
-	}).([]schemas.StudentResponse)
-
-	// studentResponses := make([]schemas.StudentResponse, len(students))
-	// for i, student := range students {
-	// 	details, err := repo.GetStudentDetails(student.ID.Hex())
-	// 	if err != nil {
-	// 		return nil, nil, errors.New(models.GetErrorMessage(models.ErrorCodeGetStudentDetails))
-	// 	}
-	// 	studentResponses[i] = *schemas.MapStudentDetailToStudentResponse(details)
-	// }
+	studentResponses := []schemas.StudentResponse{}
+	for i := 0; i < len(studentDetails); i++ {
+		studentResponses = append(studentResponses, *schemas.MapStudentDetailToStudentResponse(&studentDetails[i]))
+	}
 
 	studentsResponse := &schemas.PaginationData[schemas.StudentResponse]{
 		Data: studentResponses,
@@ -223,11 +129,11 @@ func (repo *StudentRepoService) GetStudentsWithPagination(data *schemas.Paginati
 	return paginationResponse, studentsResponse, nil
 }
 
-func (repo *StudentRepoService) GetStudent(studentId string) (*schemas.StudentResponse, error) {
-	// student, err := repo.FindByID(studentName)
-	// if err != nil {
-	// 	return nil, errors.New(models.GetErrorMessage(models.ErrorCodeFailRetrieveStudent))
-	// }
+func (repo *StudentRepoService) GetStudent(studentIDString string) (*schemas.StudentResponse, error) {
+	studentId, err := primitive.ObjectIDFromHex(studentIDString)
+	if err != nil {
+		return nil, errors.New(models.GetErrorMessage(models.ErrorCodeInputIsWrong))
+	}
 
 	details, err := repo.GetStudentDetails(studentId)
 	if err != nil {
@@ -255,7 +161,7 @@ func (repo *StudentRepoService) UpdateStudent(data schemas.UpdateStudent) (*sche
 		return nil, errors.New(models.GetErrorMessage(models.ErrorCodeCanNotUpdateStudent))
 	}
 
-	details, err := repo.GetStudentDetails(student.ID.Hex())
+	details, err := repo.GetStudentDetails(student.ID)
 	if err != nil {
 		return nil, errors.New(models.GetErrorMessage(models.ErrorCodeGetStudentDetails))
 	}

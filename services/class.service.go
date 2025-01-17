@@ -3,6 +3,8 @@ package services
 import (
 	"errors"
 	db "studenent_manager/models/db"
+	"studenent_manager/models/repository"
+	"studenent_manager/models/schemas"
 	"time"
 
 	"github.com/kamva/mgm/v3"
@@ -10,19 +12,37 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-func CreateClass(name string) (*db.Class, error) {
+var ClassService *ClassRepoService
+
+type ClassRepoService struct {
+	*repository.MongoClassRepository
+}
+
+func InitializeClassRepository() {
+	ClassService = &ClassRepoService{
+		MongoClassRepository: repository.NewMongoClassRepository(),
+	}
+}
+
+func CreateClass(data schemas.ClassRequest) (*schemas.ClassResponse, error) {
 	classId := GenerateClassID()
 	currentTime := time.Now().Format("2006-01-02 15:04:05")
 
-	class := db.CreateClass(classId, name, currentTime)
+	class := db.CreateClass(classId, data.Name, currentTime, data.MaxStudent)
 	err := mgm.Coll(class).Create(class)
 
 	if err != nil {
 		return nil, errors.New("cannot create new class")
 	}
 
-	class, _ = loadNavigationProperty(class)
-	return class, nil
+	response := &schemas.ClassResponse{
+		ClassID:    class.ID,
+		Name:       class.Name,
+		MaxStudent: class.MaxStudent,
+		CreateDate: class.CreateDate,
+	}
+
+	return response, nil
 }
 
 func GetClasses() ([]db.Class, error) {
@@ -36,7 +56,7 @@ func GetClasses() ([]db.Class, error) {
 	// 	class := &classes[i]
 	// 	class, _ = loadNavigationProperty(class)
 
-	// 	classes[i].Students = class.Students
+	// 	classes[i].Classs = class.Classs
 	// 	classes[i].Teachers = class.Teachers
 	// }
 
@@ -57,7 +77,7 @@ func GetClass(className string) (*db.Class, error) {
 	return class, nil
 }
 
-func UpdateClass(classId int, name string, students []int, teachers []int) (*db.Class, error) {
+func UpdateClass(classId int, name string, Classs []int, teachers []int) (*db.Class, error) {
 	class := &db.Class{}
 	err := mgm.Coll(class).First(bson.M{"class_id": classId}, class)
 	if err != nil {
@@ -68,7 +88,7 @@ func UpdateClass(classId int, name string, students []int, teachers []int) (*db.
 	}
 
 	class.Name = name
-	// class.StudentIds = students
+	// class.ClassIds = Classs
 	// class.TeacherIds = teachers
 
 	err = mgm.Coll(class).Update(class)
@@ -104,15 +124,15 @@ func GenerateClassID() int {
 }
 
 func loadNavigationProperty(class *db.Class) (*db.Class, error) {
-	// var students []db.Student
+	// var Classs []db.Class
 	// var teachers []db.Teacher
 
-	// // Fetch students if there are student IDs
-	// if len(class.StudentIds) > 0 {
-	// 	query := bson.M{"student_id": bson.M{"$in": class.StudentIds}}
-	// 	err := mgm.Coll(&db.Student{}).SimpleFind(&students, query)
+	// // Fetch Classs if there are Class IDs
+	// if len(class.ClassIds) > 0 {
+	// 	query := bson.M{"Class_id": bson.M{"$in": class.ClassIds}}
+	// 	err := mgm.Coll(&db.Class{}).SimpleFind(&Classs, query)
 	// 	if err != nil {
-	// 		return class, errors.New("cannot find students")
+	// 		return class, errors.New("cannot find Classs")
 	// 	}
 	// }
 
@@ -125,7 +145,7 @@ func loadNavigationProperty(class *db.Class) (*db.Class, error) {
 	// 	}
 	// }
 
-	// class.Students = students
+	// class.Classs = Classs
 	// class.Teachers = teachers
 
 	return class, nil
