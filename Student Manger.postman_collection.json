@@ -13,13 +13,13 @@
 				"header": [
 					{
 						"key": "Authorization",
-						"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImFkbWluIiwicm9sZSI6MCwiZXhwIjoxNzM2NDE5ODEzfQ.zxIhIcQ5UggcqLbVzRenLTv7vijFcMw-fYcttzcg0e0",
+						"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNjc4OGQ1ZmFiYTIzYzA2Y2ZhYzU1ZTM2IiwidXNlcm5hbWUiOiJhZG1pbiIsInJvbGUiOjAsImV4cCI6MTczNzAyMjczN30.5ME3omDCf5gZR40unPxLkILZkh9bP-H4f6xac-72Y1c",
 						"type": "text"
 					}
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n    \"name\": \"BBCBB\",\r\n    \"class_id\": 1,\r\n    \"birth_day\": \"20-10-2002\"\r\n}",
+					"raw": "{\r\n    \"name\": \"BBCBB\",\r\n    \"class_id\": \"6788937b55557918d490d4311\",\r\n    \"age\": 10,\r\n    \"birth_day\": \"20-10-2002\"\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
