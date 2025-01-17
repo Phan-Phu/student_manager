@@ -5,7 +5,6 @@ import (
 	"strings"
 	"studenent_manager/models"
 	"studenent_manager/models/db"
-	"studenent_manager/models/repository"
 	"studenent_manager/models/schemas"
 	"studenent_manager/services"
 
@@ -138,42 +137,42 @@ func DeleteTeacher(c *gin.Context) {
 }
 
 func LoginTeacher(c *gin.Context) {
-	var requestBody *schemas.UpdateTeacher
-	_ = c.ShouldBindJSON(&requestBody)
+	// var requestBody *schemas.UpdateTeacher
+	// _ = c.ShouldBindJSON(&requestBody)
 
-	teacher, err := repository.NewMongoTeacherRepository().FindByName(requestBody.Username)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
+	// teacher, err := repository.NewMongoTeacherRepository().FindByName(requestBody.Username)
+	// if err != nil {
+	// 	c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	// 	return
+	// }
 
-	// Compare the hashed password
-	isComparePassword := services.ComparePasswords(teacher.Password, requestBody.Password)
-	if !isComparePassword {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to store session"})
-		return
-	}
+	// // Compare the hashed password
+	// isComparePassword := services.ComparePasswords(teacher.Password, requestBody.Password)
+	// if !isComparePassword {
+	// 	c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to store session"})
+	// 	return
+	// }
 
-	// Generate a JWT token
-	session, err := services.GenerateJWTToken(teacher.ID.Hex(), requestBody.Username, db.TeacherRole)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-		return
-	}
+	// // Generate a JWT token
+	// session, err := services.GenerateJWTToken(teacher.ID.Hex(), requestBody.Username, db.TeacherRole)
+	// if err != nil {
+	// 	c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	// 	return
+	// }
 
-	// Save session to MongoDB
-	err = mgm.Coll(session).Create(session)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to store session"})
-		return
-	}
+	// // Save session to MongoDB
+	// err = mgm.Coll(session).Create(session)
+	// if err != nil {
+	// 	c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to store session"})
+	// 	return
+	// }
 
-	// Return token in response
-	c.JSON(http.StatusOK, gin.H{
-		"message":      "Logged in successfully",
-		"tokenAccess":  session.AccessToken,
-		"tokenRefresh": session.RefreshToken,
-	})
+	// // Return token in response
+	// c.JSON(http.StatusOK, gin.H{
+	// 	"message":      "Logged in successfully",
+	// 	"tokenAccess":  session.AccessToken,
+	// 	"tokenRefresh": session.RefreshToken,
+	// })
 }
 
 func LogoutTeacher(c *gin.Context) {

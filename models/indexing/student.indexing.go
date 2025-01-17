@@ -21,14 +21,6 @@ const (
 	Index_Partial_Student_Score = "Index_Partial_Student_Score"
 )
 
-func NewIndexingByStudentID() mongo.IndexModel {
-	indexModel := mongo.IndexModel{
-		Keys:    bson.D{{Key: "student_id", Value: 1}}, // 1 là ascending, -1 là descending
-		Options: options.Index().SetUnique(true).SetName(Index_Student_ID),
-	}
-	return indexModel
-}
-
 func NewIndexingByStudentName() mongo.IndexModel {
 	indexModel := mongo.IndexModel{
 		Keys:    bson.D{{Key: "name", Value: 1}},

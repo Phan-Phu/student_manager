@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"studenent_manager/models"
 	db "studenent_manager/models/db"
 	"studenent_manager/models/indexing"
 	"studenent_manager/models/repository"
@@ -12,6 +13,8 @@ import (
 	"time"
 
 	"github.com/kamva/mgm/v3"
+	"github.com/thoas/go-funk"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -19,45 +22,60 @@ import (
 var StudentService *StudentRepoService
 
 type StudentRepoService struct {
-	Repo repository.StudentRepositoryInteface
+	*repository.MongoStudentRepository
 }
 
 func InitializeStudentRepository() {
-	studentrepo := repository.NewMongoStudentRepository()
 	StudentService = &StudentRepoService{
-		Repo: studentrepo,
+		MongoStudentRepository: repository.NewMongoStudentRepository(),
 	}
+
 	indexModels := []mongo.IndexModel{}
 	// indexing.DeleteIndexing("age_1")
 	indexing.DeleteAllIndexing()
 
-	// not check if not first student --> error
-	indexModels = append(indexModels, indexing.NewIndexingByStudentID())
-	indexModels = append(indexModels, indexing.NewIndexingByStudentName())
-	indexModels = append(indexModels, indexing.NewIndexingByStudentAge())
-	indexModels = append(indexModels, indexing.NewPartialIndexScore(50)) // target score: 50
-	indexModels = append(indexModels, indexing.NewIndexingByStudentAgeAndName())
-	indexModels = append(indexModels, indexing.NewWildCardIndex())
-	indexing.AddIndexModels(indexModels)
-	indexing.PrintAllIndexing()
+	count, err := StudentService.Count()
+	if err == nil && count > 0 {
+		indexModels = append(indexModels, indexing.NewIndexingByStudentName())
+		indexModels = append(indexModels, indexing.NewIndexingByStudentAge())
+		indexModels = append(indexModels, indexing.NewPartialIndexScore(50)) // target score: 50
+		indexModels = append(indexModels, indexing.NewIndexingByStudentAgeAndName())
+		indexModels = append(indexModels, indexing.NewWildCardIndex())
+		indexing.AddIndexModels(indexModels)
+		indexing.PrintAllIndexing()
+
+	}
 }
 
-func (repo *StudentRepoService) CreateStudent(data schemas.RequestStudent) (*schemas.ResponseStudent, error) {
+func (repo *StudentRepoService) CreateStudent(data schemas.RequestStudent) (*schemas.StudentResponse, error) {
 	initScore := 0
 
-	student := db.NewStudent(data.Name, data.ClassID, data.BirthDay, data.Age, initScore)
-	err := repo.Repo.Create(student)
-
+	classId, err := primitive.ObjectIDFromHex(data.ClassId)
 	if err != nil {
-		return nil, errors.New("cannot create new student")
+		return nil, errors.New(models.GetErrorMessage(models.ErrorCodeInputIsWrong))
 	}
 
-	response := &schemas.ResponseStudent{
-		StudentID: student.ID,
-		Name:      student.Name,
-		ClassID:   student.ClassID,
-		BirthDay:  student.BirthDay,
+	class, err := repository.NewMongoClassRepository().FindByID(data.ClassId)
+	if err != nil {
+		return nil, errors.New(models.GetErrorMessage(models.ErrorCodeInputIsWrong))
 	}
+
+	if class.MaxStudent > db.MaxStudentInClass {
+		return nil, errors.New(models.GetErrorMessage(models.ErrorCodeMaxStudentInClass))
+	}
+
+	student := db.NewStudent(data.Name, classId, data.BirthDay, data.Age, initScore)
+	err = repo.Create(student)
+	if err != nil {
+		return nil, errors.New(models.GetErrorMessage(models.ErrorCodeCanNotCreateStudent))
+	}
+
+	classResponse := &schemas.ClassResponse{
+		Name:       class.Name,
+		MaxStudent: class.MaxStudent,
+	}
+
+	response := schemas.MapStudentToStudentResponse(student, classResponse)
 
 	return response, nil
 }
@@ -85,17 +103,13 @@ func (repo *StudentRepoService) InsertManyStudentMultiThreads() error {
 
 		students := make([]db.Student, end-start)
 		for i := start; i < end; i++ {
-			name := fmt.Sprintf("Name%d", i+1)
-			student := db.NewStudent(name, i+1, "", 10, 0)
-			students[i-start] = *student
+			// name := fmt.Sprintf("Name%d", i+1)
+			// className := fmt.Sprintf("class %d", i+1)
+			// student := db.NewStudent(name, className, "", 10, 0)
+			// students[i-start] = *student
 		}
 
-		docs := make([]interface{}, len(students))
-		for i, student := range students {
-			docs[i] = student
-		}
-
-		if err := repo.Repo.CreateMany(docs); err != nil {
+		if err := repo.CreateMany(students); err != nil {
 			errChan <- err
 		}
 
@@ -121,7 +135,7 @@ func (repo *StudentRepoService) InsertManyStudentMultiThreads() error {
 	// Check for errors
 	for err := range errChan {
 		if err != nil {
-			return errors.New("failed to create students: " + err.Error())
+			return errors.New(models.GetErrorMessage(models.ErrorCodeFailCreateStudent) + err.Error())
 		}
 	}
 
@@ -134,30 +148,22 @@ func (repo *StudentRepoService) InsertManyStudentMultiThreads() error {
 }
 
 func (repo *StudentRepoService) InsertManyStudentOneThread() error {
-	start := time.Now() // Bắt đầu đo thời gian
+	start := time.Now()
 
 	students := []db.Student{}
 
-	// Tạo danh sách students
 	for i := 0; i < 1000; i++ {
-		name := fmt.Sprintf("Name%d", i+1)
-		student := db.NewStudent(name, i+1, "", 10, 0)
-		students = append(students, *student)
+		// name := fmt.Sprintf("Name%d", i+1)
+		// className := fmt.Sprintf("class %d", i+1)
+		// student := db.NewStudent(name, className, "", 10, 0)
+		// students = append(students, *student)
 	}
 
-	// Chuyển đổi students thành danh sách interface{}
-	docs := make([]interface{}, len(students))
-	for i, student := range students {
-		docs[i] = student
-	}
-
-	// Chèn dữ liệu vào database
-	err := repo.Repo.CreateMany(docs)
+	err := repo.CreateMany(students)
 	if err != nil {
-		return fmt.Errorf("failed to insert students: %w", err)
+		return fmt.Errorf(models.GetErrorMessage(models.ErrorCodeFailCreateStudent), err)
 	}
 
-	// Đo thời gian sau khi hoàn thành toàn bộ công việc
 	estTime := time.Since(start)
 	fmt.Printf("InsertManyStudentOneThreads took %s\n", estTime)
 
@@ -165,21 +171,21 @@ func (repo *StudentRepoService) InsertManyStudentOneThread() error {
 }
 
 func (repo *StudentRepoService) GetStudents() ([]*db.Student, error) {
-	students, err := repo.Repo.FindAll()
+	students, err := repo.FindAll()
 
 	if err != nil {
-		return nil, errors.New("cannot get students")
+		return nil, errors.New(models.GetErrorMessage(models.ErrorCodeMaxStudentInClass))
 	}
 	return students, nil
 }
 
-func (repo *StudentRepoService) GetStudentsWithPagination(data *schemas.PaginationRequest) (*schemas.PaginationResponse, *schemas.PaginationData[db.Student], error) {
+func (repo *StudentRepoService) GetStudentsWithPagination(data *schemas.PaginationRequest) (*schemas.PaginationResponse, *schemas.PaginationData[schemas.StudentResponse], error) {
 	findOptions := options.Find()
 	findOptions.SetSkip((int64(data.Page) - 1) * data.Limit)
 	findOptions.SetLimit(int64(data.Limit))
 
-	students, _ := repo.Repo.FindByFindOptions(findOptions)
-	total, _ := repo.Repo.Count()
+	students, _ := repo.FindByFindOptions(findOptions)
+	total, _ := repo.Count()
 
 	paginationResponse := &schemas.PaginationResponse{
 		Page:      data.Page,
@@ -188,62 +194,76 @@ func (repo *StudentRepoService) GetStudentsWithPagination(data *schemas.Paginati
 		TotalPage: int(math.Ceil(float64(total) / float64(data.Limit))),
 	}
 
-	studentsRespone := &schemas.PaginationData[db.Student]{
-		Data: students,
+	studentIDs := funk.Map(students, func(s db.Student) string {
+		return s.ID.Hex()
+	}).([]string)
+
+	studentDetails, err := repo.GetStudentsDetails(studentIDs)
+	if err != nil {
+		return nil, nil, errors.New(models.GetErrorMessage(models.ErrorCodeGetStudentDetails))
 	}
 
-	return paginationResponse, studentsRespone, nil
+	studentResponses := funk.Map(studentDetails, func(s schemas.StudentDetails) schemas.StudentResponse {
+		return *schemas.MapStudentDetailToStudentResponse(&s)
+	}).([]schemas.StudentResponse)
+
+	// studentResponses := make([]schemas.StudentResponse, len(students))
+	// for i, student := range students {
+	// 	details, err := repo.GetStudentDetails(student.ID.Hex())
+	// 	if err != nil {
+	// 		return nil, nil, errors.New(models.GetErrorMessage(models.ErrorCodeGetStudentDetails))
+	// 	}
+	// 	studentResponses[i] = *schemas.MapStudentDetailToStudentResponse(details)
+	// }
+
+	studentsResponse := &schemas.PaginationData[schemas.StudentResponse]{
+		Data: studentResponses,
+	}
+
+	return paginationResponse, studentsResponse, nil
 }
 
-func (repo *StudentRepoService) GetStudent(studentName string) (*schemas.ResponseStudent, error) {
-	start := time.Now()
-	student, err := repo.Repo.FindByName(studentName)
+func (repo *StudentRepoService) GetStudent(studentId string) (*schemas.StudentResponse, error) {
+	// student, err := repo.FindByID(studentName)
+	// if err != nil {
+	// 	return nil, errors.New(models.GetErrorMessage(models.ErrorCodeFailRetrieveStudent))
+	// }
+
+	details, err := repo.GetStudentDetails(studentId)
 	if err != nil {
-		if err == mongo.ErrNoDocuments {
-			return nil, errors.New("student not found")
-		}
-		return nil, errors.New("cannot get student")
+		return nil, errors.New(models.GetErrorMessage(models.ErrorCodeGetStudentDetails))
 	}
 
-	elapsed := time.Since(start)
-	fmt.Printf("Found student: %+v\n", student)
-	fmt.Printf("Time with index: %v\n", elapsed)
-
-	response := &schemas.ResponseStudent{
-		StudentID: student.ID,
-		Name:      student.Name,
-		ClassID:   student.ClassID,
-		Age:       student.Age,
-		BirthDay:  student.BirthDay,
-	}
+	response := schemas.MapStudentDetailToStudentResponse(details)
 
 	return response, nil
 }
 
 func (repo *StudentRepoService) UpdateStudent(data schemas.UpdateStudent) (*schemas.ResponseUpdateStudent, error) {
-	student, err := repo.Repo.FindByID(data.StudentID)
+	student, err := repo.FindByID(data.StudentID)
 	if err != nil {
-		if err == mgm.Ctx().Err() {
-			return nil, errors.New("student not found")
-		}
-		return nil, errors.New("cannot get student")
+		return nil, errors.New(models.GetErrorMessage(models.ErrorCodeMaxStudentInClass))
 	}
 
 	student.Name = data.Name
-	student.ClassID = data.ClassID
+	// student.ClassName = data.ClassName
 	student.BirthDay = data.BirthDay
 	student.Age = data.Age
 
 	err = mgm.Coll(student).Update(student)
 	if err != nil {
-		return nil, errors.New("cannot update student")
+		return nil, errors.New(models.GetErrorMessage(models.ErrorCodeCanNotUpdateStudent))
+	}
+
+	details, err := repo.GetStudentDetails(student.ID.Hex())
+	if err != nil {
+		return nil, errors.New(models.GetErrorMessage(models.ErrorCodeGetStudentDetails))
 	}
 
 	response := &schemas.ResponseUpdateStudent{
 		StudentID: student.ID,
 		Name:      student.Name,
-		ClassID:   student.ClassID,
-		Age:       student.Age,
+		Class:     details.Class,
 		BirthDay:  student.BirthDay,
 	}
 
@@ -251,19 +271,16 @@ func (repo *StudentRepoService) UpdateStudent(data schemas.UpdateStudent) (*sche
 }
 
 func (repo *StudentRepoService) UpdateScore(data schemas.UpdateScoreStudent) (*schemas.ResponseUpdateScoreStudent, error) {
-	student, err := repo.Repo.FindByID(data.StudentID)
+	student, err := repo.FindByID(data.StudentID)
 	if err != nil {
-		if err == mgm.Ctx().Err() {
-			return nil, errors.New("student not found")
-		}
-		return nil, errors.New("cannot get student")
+		return nil, errors.New(models.GetErrorMessage(models.ErrorCodeStudentIsNotFound))
 	}
 
 	student.Score = data.Score
 
 	err = mgm.Coll(student).Update(student)
 	if err != nil {
-		return nil, errors.New("cannot update student")
+		return nil, errors.New((models.GetErrorMessage(models.ErrorCodeCanNotUpdateStudent)))
 	}
 
 	response := &schemas.ResponseUpdateScoreStudent{
@@ -276,17 +293,14 @@ func (repo *StudentRepoService) UpdateScore(data schemas.UpdateScoreStudent) (*s
 }
 
 func (repo *StudentRepoService) DeleteStudent(data schemas.DeleteStudent) error {
-	student, err := repo.Repo.FindByID(data.StudentID)
+	student, err := repo.FindByID(data.StudentID)
 	if err != nil {
-		if err == mgm.Ctx().Err() {
-			return errors.New("student not found")
-		}
-		return errors.New("cannot get student")
+		return errors.New(models.GetErrorMessage(models.ErrorCodeMaxStudentInClass))
 	}
 
 	err = mgm.Coll(student).Delete(student)
 	if err != nil {
-		return errors.New("cannot delete student")
+		return errors.New(models.GetErrorMessage(models.ErrorCodeFailDeleteStudent))
 	}
 
 	return nil

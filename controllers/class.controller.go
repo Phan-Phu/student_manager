@@ -11,7 +11,6 @@ import (
 )
 
 func CreateClass(c *gin.Context) {
-	// Gán giá trị mặc định cho trường Role
 	var requestBody db.Class
 	_ = c.ShouldBindJSON(&requestBody)
 	requestBody.Name = strings.TrimSpace(requestBody.Name)
@@ -21,7 +20,7 @@ func CreateClass(c *gin.Context) {
 		Success:    false,
 	}
 
-	class, err := services.CreateClass(requestBody.Name, requestBody.StudentIds, requestBody.TeacherIds)
+	class, err := services.CreateClass(requestBody.Name)
 	if err != nil {
 		response.Message = err.Error()
 		response.SendResponse(c)
@@ -84,31 +83,31 @@ func GetClass(c *gin.Context) {
 }
 
 func UpdateClass(c *gin.Context) {
-	var requestBody db.Class
-	_ = c.ShouldBindJSON(&requestBody)
-	requestBody.Name = strings.TrimSpace(requestBody.Name)
+	// var requestBody db.Class
+	// _ = c.ShouldBindJSON(&requestBody)
+	// requestBody.Name = strings.TrimSpace(requestBody.Name)
 
-	response := &models.Response{
-		StatusCode: http.StatusOK,
-		Success:    true,
-	}
+	// response := &models.Response{
+	// 	StatusCode: http.StatusOK,
+	// 	Success:    true,
+	// }
 
-	students := requestBody.StudentIds
-	teachers := requestBody.TeacherIds
+	// students := requestBody.StudentIds
+	// teachers := requestBody.TeacherIds
 
-	class, err := services.UpdateClass(requestBody.ClassID, requestBody.Name, students, teachers)
-	if err != nil {
-		response.StatusCode = http.StatusNotFound
-		response.Success = false
-		response.Message = err.Error()
-		response.SendResponse(c)
-		return
-	}
+	// class, err := services.UpdateClass(requestBody.ClassID, requestBody.Name, students, teachers)
+	// if err != nil {
+	// 	response.StatusCode = http.StatusNotFound
+	// 	response.Success = false
+	// 	response.Message = err.Error()
+	// 	response.SendResponse(c)
+	// 	return
+	// }
 
-	response.Data = gin.H{
-		"class": class,
-	}
-	response.SendResponse(c)
+	// response.Data = gin.H{
+	// 	"class": class,
+	// }
+	// response.SendResponse(c)
 }
 
 func DeleteClass(c *gin.Context) {

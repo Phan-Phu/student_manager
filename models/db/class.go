@@ -1,33 +1,45 @@
 package db
 
-import "github.com/kamva/mgm/v3"
+import (
+	"time"
+
+	"github.com/kamva/mgm/v3"
+)
+
+type ClassStatus int
+
+const (
+	Opened   ClassStatus = 1
+	Closed   ClassStatus = 2
+	Full     ClassStatus = 3
+	Maintain ClassStatus = 4
+)
+
+const MaxStudentInClass = 10
 
 type Class struct {
 	mgm.DefaultModel `bson:",inline"`
-	ClassID          int       `json:"id" bson:"class_id"`
-	Name             string    `json:"name" bson:"name"`
-	Students         []Student `bson:"-"`          // not need store in database
-	Teachers         []Teacher `bson:"-"`          // not need store in database
-	StudentIds       []int     `bson:"studentIds"` // not need store in database
-	TeacherIds       []int     `bson:"teacherIds"` // not need store in database
-	CreateDate       string    `json:"create_date" bson:"create_date"`
-	Role             Role      `json:"role" bson:"role"`
+	Name             string `bson:"name"`
+	CreateDate       string `bson:"create_date"`
+	MaxStudent       int    `bson:"max_student"`
 }
 
-func CreateClass(classId int,
-	name string,
-	createDate string,
-	studentIds []int,
-	teacherIds []int,
-) *Class {
+type ClassEnrollment struct {
+	mgm.DefaultModel `bson:",inline"`
+	StudentIds       []string    `bson:"student_ids"`
+	ClassId          string      `bson:"class_id"`
+	StartDate        time.Time   `bson:"start_date"`
+	EndDate          time.Time   `bson:"end_date"`
+	Status           ClassStatus `bson:"status"`
+}
+
+type OldClassEnrollment struct {
+	Data []ClassEnrollment `bson:"data"`
+}
+
+func CreateClass(classId int, name string, createDate string) *Class {
 	return &Class{
-		ClassID:    classId,
 		Name:       name,
 		CreateDate: createDate,
-		Students:   nil,
-		Teachers:   nil,
-		StudentIds: studentIds,
-		TeacherIds: teacherIds,
-		Role:       NoneRole,
 	}
 }

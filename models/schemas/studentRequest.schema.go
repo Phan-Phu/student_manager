@@ -8,7 +8,7 @@ import (
 
 type RequestStudent struct {
 	Name     string `json:"name"`
-	ClassID  int    `json:"class_id"`
+	ClassId  string `json:"class_id"`
 	Age      int    `json:"age"`
 	BirthDay string `json:"birth_day"`
 }
@@ -46,10 +46,11 @@ type UpdateScoreStudent struct {
 type UpdateStudent struct {
 	StudentID string `json:"_id"`
 	Name      string `json:"name"`
-	ClassID   int    `json:"class_id"`
+	ClassID   string `json:"class_id"`
 	BirthDay  string `json:"birth_day"`
 	Age       int    `json:"age"`
 	Score     int    `json:"score"`
+	IsLock    bool   `json:"isLock"`
 }
 
 func (u *UpdateStudent) Validate() error {

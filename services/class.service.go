@@ -10,11 +10,11 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-func CreateClass(name string, studentIds []int, teacherIds []int) (*db.Class, error) {
+func CreateClass(name string) (*db.Class, error) {
 	classId := GenerateClassID()
 	currentTime := time.Now().Format("2006-01-02 15:04:05")
 
-	class := db.CreateClass(classId, name, currentTime, studentIds, teacherIds)
+	class := db.CreateClass(classId, name, currentTime)
 	err := mgm.Coll(class).Create(class)
 
 	if err != nil {
@@ -31,14 +31,14 @@ func GetClasses() ([]db.Class, error) {
 	if err != nil {
 		return nil, errors.New("cannot get classes")
 	}
-	for i := 0; i < len(classes); i++ {
+	// for i := 0; i < len(classes); i++ {
 
-		class := &classes[i]
-		class, _ = loadNavigationProperty(class)
+	// 	class := &classes[i]
+	// 	class, _ = loadNavigationProperty(class)
 
-		classes[i].Students = class.Students
-		classes[i].Teachers = class.Teachers
-	}
+	// 	classes[i].Students = class.Students
+	// 	classes[i].Teachers = class.Teachers
+	// }
 
 	return classes, nil
 }
@@ -68,8 +68,8 @@ func UpdateClass(classId int, name string, students []int, teachers []int) (*db.
 	}
 
 	class.Name = name
-	class.StudentIds = students
-	class.TeacherIds = teachers
+	// class.StudentIds = students
+	// class.TeacherIds = teachers
 
 	err = mgm.Coll(class).Update(class)
 	if err != nil {
@@ -104,29 +104,29 @@ func GenerateClassID() int {
 }
 
 func loadNavigationProperty(class *db.Class) (*db.Class, error) {
-	var students []db.Student
-	var teachers []db.Teacher
+	// var students []db.Student
+	// var teachers []db.Teacher
 
-	// Fetch students if there are student IDs
-	if len(class.StudentIds) > 0 {
-		query := bson.M{"student_id": bson.M{"$in": class.StudentIds}}
-		err := mgm.Coll(&db.Student{}).SimpleFind(&students, query)
-		if err != nil {
-			return class, errors.New("cannot find students")
-		}
-	}
+	// // Fetch students if there are student IDs
+	// if len(class.StudentIds) > 0 {
+	// 	query := bson.M{"student_id": bson.M{"$in": class.StudentIds}}
+	// 	err := mgm.Coll(&db.Student{}).SimpleFind(&students, query)
+	// 	if err != nil {
+	// 		return class, errors.New("cannot find students")
+	// 	}
+	// }
 
-	// Fetch teachers if there are teacher IDs
-	if len(class.TeacherIds) > 0 {
-		query := bson.M{"teacher_id": bson.M{"$in": class.TeacherIds}}
-		err := mgm.Coll(&db.Teacher{}).SimpleFind(&teachers, query)
-		if err != nil {
-			return class, errors.New("cannot find teachers")
-		}
-	}
+	// // Fetch teachers if there are teacher IDs
+	// if len(class.TeacherIds) > 0 {
+	// 	query := bson.M{"teacher_id": bson.M{"$in": class.TeacherIds}}
+	// 	err := mgm.Coll(&db.Teacher{}).SimpleFind(&teachers, query)
+	// 	if err != nil {
+	// 		return class, errors.New("cannot find teachers")
+	// 	}
+	// }
 
-	class.Students = students
-	class.Teachers = teachers
+	// class.Students = students
+	// class.Teachers = teachers
 
 	return class, nil
 }

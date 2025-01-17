@@ -9,13 +9,13 @@ import (
 
 type Token struct {
 	mgm.DefaultModel `bson:",inline"`
-	AccessToken      string             `json:"access_token" bson:"access_token"`             // Token truy cập
-	User             primitive.ObjectID `json:"user" bson:"user"`                             // ID người dùng
-	RefreshToken     string             `json:"refresh_token" bson:"refresh_token"`           // Token làm mới
-	Role             Role               `json:"role" bson:"role"`                             // Vai trò người dùng
-	AccessExpiresAt  time.Time          `json:"access_expires_at" bson:"access_expires_at"`   // Thời điểm hết hạn token truy cập
-	RefreshExpiresAt time.Time          `json:"refresh_expires_at" bson:"refresh_expires_at"` // Thời điểm hết hạn token truy cập
-	Blacklisted      bool               `json:"blacklisted" bson:"blacklisted"`               // Trạng thái blacklist
+	AccessToken      string             `json:"access_token" bson:"access_token"`
+	User             primitive.ObjectID `json:"user" bson:"user"`
+	RefreshToken     string             `json:"refresh_token" bson:"refresh_token"`
+	Role             Role               `json:"role" bson:"role"`
+	AccessExpiresAt  time.Time          `json:"access_expires_at" bson:"access_expires_at"`
+	RefreshExpiresAt time.Time          `json:"refresh_expires_at" bson:"refresh_expires_at"`
+	Blacklisted      bool               `json:"blacklisted" bson:"blacklisted"`
 }
 
 func NewToken(tokenAccess string, tokenRefresh string, role Role, expiresAt time.Time, refreshExpiresAt time.Time) *Token {

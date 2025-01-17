@@ -79,11 +79,11 @@ func GetStudent(c *gin.Context) {
 	}
 
 	var requestBody struct {
-		Name string `json:"name"`
+		StudentId string `json:"student_id"`
 	}
 	_ = c.ShouldBindJSON(&requestBody)
 
-	student, err := services.StudentService.GetStudent(requestBody.Name)
+	student, err := services.StudentService.GetStudent(requestBody.StudentId)
 
 	if err != nil {
 		response.StatusCode = http.StatusNotFound
@@ -170,3 +170,5 @@ func DeleteStudent(c *gin.Context) {
 	response.Message = "Student deleted successfully"
 	response.SendResponse(c)
 }
+
+// quản lý err response

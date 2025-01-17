@@ -6,6 +6,44 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+const (
+	ErrorCodeCanNotCreateStudent = 1001
+	ErrorCodeFailCreateStudent   = 1002
+	ErrorCodeFailDeleteStudent   = 1003
+	ErrorCodeFailRetrieveStudent = 1004
+	ErrorCodeStudentIsNotFound   = 1005
+	ErrorCodeStudentIsEmpty      = 1006
+	ErrorCodeCanNotUpdateStudent = 1007
+	ErrorCodeCanNotFindClass     = 1008
+	ErrorCodeMaxStudentInClass   = 1009
+	ErrorCodeNotFoundClass       = 1010
+	ErrorCodeInputIsWrong        = 1011
+	ErrorCodeGetStudentDetails   = 1012
+)
+
+// Error messages mapped with error codes
+var errorMessages = map[int]string{
+	ErrorCodeCanNotCreateStudent: "Can not create student",
+	ErrorCodeFailCreateStudent:   "Failed to create student",
+	ErrorCodeFailDeleteStudent:   "Failed to delete student",
+	ErrorCodeFailRetrieveStudent: "Failed to retrieve student",
+	ErrorCodeStudentIsNotFound:   "Student is not found",
+	ErrorCodeStudentIsEmpty:      "Student is empty",
+	ErrorCodeCanNotUpdateStudent: "Can not update student",
+	ErrorCodeCanNotFindClass:     "Not Found Class",
+	ErrorCodeMaxStudentInClass:   "Max student in class",
+	ErrorCodeNotFoundClass:       "Not found class",
+	ErrorCodeInputIsWrong:        "Input is wrong",
+	ErrorCodeGetStudentDetails:   "Error Get Student details",
+}
+
+func GetErrorMessage(code int) string {
+	if message, exists := errorMessages[code]; exists {
+		return message
+	}
+	return "Unknown error"
+}
+
 // Response Base response
 type Response struct {
 	StatusCode int            `json:"-"`
@@ -36,4 +74,11 @@ func SendErrorResponse(c *gin.Context, status int, message string) {
 	response.SendResponse(c)
 }
 
-// sua user name thanh user id
+func GetErrorResponse(status int, data string) *Response {
+	response := &Response{
+		StatusCode: status,
+		Success:    false,
+		Message:    data,
+	}
+	return response
+}
