@@ -43,17 +43,16 @@ type UpdateScoreStudent struct {
 	Score     int    `json:"score"`
 }
 
-type UpdateStudent struct {
-	StudentID string `json:"_id"`
-	Name      string `json:"name"`
-	ClassID   string `json:"class_id"`
-	BirthDay  string `json:"birth_day"`
-	Age       int    `json:"age"`
-	Score     int    `json:"score"`
-	IsLock    bool   `json:"isLock"`
+type UpdateStudentRequest struct {
+	Name     string `json:"name"`
+	ClassID  string `json:"class_id"`
+	BirthDay string `json:"birth_day"`
+	Age      int    `json:"age"`
+	Score    int    `json:"score"`
+	IsLock   bool   `json:"isLock"`
 }
 
-func (u *UpdateStudent) Validate() error {
+func (u *UpdateStudentRequest) Validate() error {
 	// if u.StudentID <= 0 {
 	// 	return errors.New("invalid student_id")
 	// }

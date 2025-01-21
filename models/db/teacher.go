@@ -1,36 +1,33 @@
 package db
 
-import "github.com/kamva/mgm/v3"
+import (
+	"github.com/kamva/mgm/v3"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+)
 
 type Role int
 
 const (
-	NoneRole    Role = -1
 	AdminRole   Role = 0 // admin can be fix in first release.
 	TeacherRole Role = 1
-	StudentRole Role = 2
 )
 
 type Teacher struct {
 	mgm.DefaultModel `bson:",inline"`
-	TeacherID        int    `json:"teacher_id" bson:"teacher_id"`
-	Name             string `json:"name" bson:"name"`
-	BirthDay         string `json:"birth_day" bson:"birth_day"`
-	ClassIds         []int  `json:"class" bson:"class"`
-	Role             Role   `json:"role" bson:"role"` // not input from user
-	Username         string `json:"username" bson:"username"`
-	Password         string `json:"password" bson:"password"`
+	Name             string               `bson:"name"`
+	BirthDay         string               `bson:"birth_day"`
+	Username         string               `bson:"username"`
+	Password         string               `bson:"password"`
+	ClassIds         []primitive.ObjectID `bson:"class_ids"`
+	SubjectIds       []primitive.ObjectID `bson:"subject_ids"`
 }
 
-func CreateTeacher(teacherId int, name string, classIds []int, birthDay string, userName string, password string) *Teacher {
+func NewTeacher(name string, classIds []primitive.ObjectID, birthDay string, userName string, password string) *Teacher {
 	return &Teacher{
-
-		TeacherID: teacherId,
-		Name:      name,
-		ClassIds:  classIds,
-		BirthDay:  birthDay,
-		Role:      TeacherRole,
-		Username:  userName,
-		Password:  password,
+		Name:     name,
+		ClassIds: classIds,
+		BirthDay: birthDay,
+		Username: userName,
+		Password: password,
 	}
 }

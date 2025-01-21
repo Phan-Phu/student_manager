@@ -1,7 +1,7 @@
 package schemas
 
 import (
-	"studenent_manager/models/db"
+	"student_manager/models/db"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -27,10 +27,10 @@ type ResponseUpdateScoreStudent struct {
 }
 
 type StudentDetails struct {
-	StudentID primitive.ObjectID `json:"student_id"`
-	Name      string             `json:"name"`
-	Class     ClassResponse      `json:"class"`
-	BirthDay  string             `json:"birth_day"`
+	StudentID primitive.ObjectID `json:"student_id" bson:"_id"`
+	Name      string             `json:"name" bson:"name"`
+	Class     ClassResponse      `json:"class" bson:"classes"`
+	BirthDay  string             `json:"birth_day" bson:"birth_day"`
 }
 
 func MapStudentDetailToStudentResponse(student *StudentDetails) *StudentResponse {

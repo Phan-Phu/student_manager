@@ -9,10 +9,10 @@ import (
 type ClassStatus int
 
 const (
-	Opened   ClassStatus = 1
-	Closed   ClassStatus = 2
-	Full     ClassStatus = 3
-	Maintain ClassStatus = 4
+	ClassStatusOpened   ClassStatus = 1
+	ClassStatusClosed   ClassStatus = 2
+	ClassStatusFull     ClassStatus = 3
+	ClassStatusMaintain ClassStatus = 4
 )
 
 const MaxStudentInClass = 10
@@ -21,26 +21,13 @@ type Class struct {
 	mgm.DefaultModel `bson:",inline"`
 	Name             string `bson:"name"`
 	CreateDate       string `bson:"create_date"`
-	MaxStudent       int    `bson:"max_student"`
+	MaxStudent       int    `bson:"current_student"`
 }
 
-type ClassEnrollment struct {
-	mgm.DefaultModel `bson:",inline"`
-	StudentIds       []string    `bson:"student_ids"`
-	ClassId          string      `bson:"class_id"`
-	StartDate        time.Time   `bson:"start_date"`
-	EndDate          time.Time   `bson:"end_date"`
-	Status           ClassStatus `bson:"status"`
-}
-
-type OldClassEnrollment struct {
-	Data []ClassEnrollment `bson:"data"`
-}
-
-func CreateClass(classId int, name string, createDate string, maxStudent int) *Class {
+func NewClass(name string, maxStudent int) *Class {
 	return &Class{
 		Name:       name,
-		CreateDate: createDate,
+		CreateDate: time.November.String(),
 		MaxStudent: maxStudent,
 	}
 }

@@ -2,13 +2,16 @@ package services
 
 import (
 	"context"
+	"errors"
 	"log"
-	db "studenent_manager/models/db"
+	"student_manager/models"
+	db "student_manager/models/db"
 	"time"
 
 	"github.com/golang-jwt/jwt"
 	"github.com/kamva/mgm/v3"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 	"golang.org/x/crypto/bcrypt"
@@ -88,4 +91,24 @@ func ValidateJWTToken(token string) (*db.ResponseAccount, error) {
 		return []byte(Config.JWTSecretKey), nil
 	})
 	return response, err
+}
+
+func ConvertStringsToObjectIDs(ids []string) ([]primitive.ObjectID, error) {
+	results := []primitive.ObjectID{}
+	for i := 0; i < len(ids); i++ {
+		id, err := primitive.ObjectIDFromHex(ids[i])
+		if err != nil {
+			return nil, errors.New(models.GetErrorMessage(models.ErrorCodeIDIsWrong))
+		}
+		results = append(results, id)
+	}
+	return results, nil
+}
+
+func ConvertStringToObjectID(id string) (*primitive.ObjectID, error) {
+	result, err := primitive.ObjectIDFromHex(id)
+	if err != nil {
+		return nil, errors.New(models.GetErrorMessage(models.ErrorCodeIDIsWrong))
+	}
+	return &result, nil
 }

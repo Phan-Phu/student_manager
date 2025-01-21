@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"studenent_manager/models/db"
+	"student_manager/models/db"
 
 	"github.com/kamva/mgm/v3"
 	"go.mongodb.org/mongo-driver/bson"
@@ -20,6 +20,20 @@ const (
 	Index_WildCard_Student      = "Index_WildCard_Student"
 	Index_Partial_Student_Score = "Index_Partial_Student_Score"
 )
+
+func NewIndexingStudent() {
+	indexModels := []mongo.IndexModel{}
+	// DeleteIndexing("name_index")
+	DeleteAllStudentIndexing()
+
+	indexModels = append(indexModels, NewIndexingByStudentName())
+	indexModels = append(indexModels, NewIndexingByStudentAge())
+	indexModels = append(indexModels, NewPartialIndexScore(50)) // target score: 50
+	indexModels = append(indexModels, NewIndexingByStudentAgeAndName())
+	indexModels = append(indexModels, NewWildCardIndex())
+	AddIndexModels(indexModels)
+	PrintAllStudentIndexing()
+}
 
 func NewIndexingByStudentName() mongo.IndexModel {
 	indexModel := mongo.IndexModel{
@@ -112,17 +126,17 @@ func AddIndexModel(indexModel mongo.IndexModel) error {
 
 // B+tree
 
-func DeleteAllIndexing() error {
+func DeleteAllStudentIndexing() error {
 	_, err := mgm.Coll(&db.Student{}).Indexes().DropAll(context.TODO())
 	return err
 }
 
-func DeleteIndexing(indexName string) error {
+func DeleteStudentIndexing(indexName string) error {
 	_, err := mgm.Coll(&db.Student{}).Indexes().DropOne(context.TODO(), indexName)
 	return err
 }
 
-func PrintAllIndexing() {
+func PrintAllStudentIndexing() {
 	cursor, err := mgm.Coll(&db.Student{}).Indexes().List(context.TODO())
 	if err != nil {
 		log.Fatal(err)

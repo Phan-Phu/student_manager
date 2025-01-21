@@ -1,7 +1,7 @@
 package routes
 
 import (
-	"studenent_manager/controllers"
+	"student_manager/controllers"
 
 	"github.com/gin-gonic/gin"
 )
@@ -24,9 +24,14 @@ func TeacherRoute(router *gin.RouterGroup) {
 			controllers.GetTeacher,
 		)
 
-		auth.POST(
-			"/update",
-			controllers.UpdateTeacher,
+		auth.PATCH(
+			"/updateInfo",
+			controllers.UpdateInfoTeacher,
+		)
+
+		auth.PATCH(
+			"/updateClass",
+			controllers.UpdateClassTeacher,
 		)
 
 		auth.DELETE(

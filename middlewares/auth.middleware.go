@@ -2,8 +2,8 @@ package middlewares
 
 import (
 	"net/http"
-	"studenent_manager/models/db"
-	"studenent_manager/services"
+	"student_manager/models/db"
+	"student_manager/services"
 	"time"
 
 	"github.com/gin-gonic/gin"

@@ -2,15 +2,15 @@ package controllers
 
 import (
 	"net/http"
-	"studenent_manager/models"
-	"studenent_manager/models/schemas"
-	"studenent_manager/services"
+	"student_manager/models"
+	"student_manager/models/schemas"
+	"student_manager/services"
 
 	"github.com/gin-gonic/gin"
 )
 
 func CreateClass(c *gin.Context) {
-	var requestBody schemas.ClassRequest
+	var requestBody schemas.RequestClass
 	_ = c.ShouldBindJSON(&requestBody)
 
 	response := &models.Response{
@@ -18,7 +18,7 @@ func CreateClass(c *gin.Context) {
 		Success:    false,
 	}
 
-	class, err := services.CreateClass(requestBody)
+	class, err := services.ClassService.CreateClass(requestBody)
 	if err != nil {
 		response.Message = err.Error()
 		response.SendResponse(c)
@@ -39,7 +39,7 @@ func GetClasses(c *gin.Context) {
 		Success:    true,
 	}
 
-	classes, err := services.GetClasses()
+	classes, err := services.ClassService.GetClasses()
 	if err != nil {
 		response.StatusCode = http.StatusInternalServerError
 		response.Success = false
@@ -65,7 +65,7 @@ func GetClass(c *gin.Context) {
 	}
 	_ = c.ShouldBindJSON(&requestBody)
 
-	class, err := services.GetClass(requestBody.Name)
+	class, err := services.ClassService.GetClass(requestBody.Name)
 	if err != nil {
 		response.StatusCode = http.StatusNotFound
 		response.Success = false
@@ -81,31 +81,27 @@ func GetClass(c *gin.Context) {
 }
 
 func UpdateClass(c *gin.Context) {
-	// var requestBody db.Class
-	// _ = c.ShouldBindJSON(&requestBody)
-	// requestBody.Name = strings.TrimSpace(requestBody.Name)
+	response := &models.Response{
+		StatusCode: http.StatusBadRequest,
+		Success:    true,
+	}
 
-	// response := &models.Response{
-	// 	StatusCode: http.StatusOK,
-	// 	Success:    true,
-	// }
+	var requestBody schemas.UpdateClassRequest
+	_ = c.ShouldBindJSON(&requestBody)
 
-	// students := requestBody.StudentIds
-	// teachers := requestBody.TeacherIds
+	class, err := services.ClassService.UpdateClass(requestBody)
+	if err != nil {
+		response.StatusCode = http.StatusNotFound
+		response.Success = false
+		response.Message = err.Error()
+		response.SendResponse(c)
+		return
+	}
 
-	// class, err := services.UpdateClass(requestBody.ClassID, requestBody.Name, students, teachers)
-	// if err != nil {
-	// 	response.StatusCode = http.StatusNotFound
-	// 	response.Success = false
-	// 	response.Message = err.Error()
-	// 	response.SendResponse(c)
-	// 	return
-	// }
-
-	// response.Data = gin.H{
-	// 	"class": class,
-	// }
-	// response.SendResponse(c)
+	response.Data = gin.H{
+		"class": class,
+	}
+	response.SendResponse(c)
 }
 
 func DeleteClass(c *gin.Context) {
@@ -113,12 +109,10 @@ func DeleteClass(c *gin.Context) {
 		StatusCode: http.StatusOK,
 		Success:    true,
 	}
-	var requestBody struct {
-		ClassID int `json:"class_id"`
-	}
+	var requestBody schemas.DeleteClassRequest
 	_ = c.ShouldBindJSON(&requestBody)
 
-	err := services.DeleteClass(requestBody.ClassID)
+	err := services.ClassService.DeleteClass(requestBody)
 	if err != nil {
 		response.StatusCode = http.StatusNotFound
 		response.Success = false

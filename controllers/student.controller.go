@@ -3,9 +3,9 @@ package controllers
 import (
 	"net/http"
 	"strings"
-	"studenent_manager/models"
-	"studenent_manager/models/schemas"
-	"studenent_manager/services"
+	"student_manager/models"
+	"student_manager/models/schemas"
+	"student_manager/services"
 
 	"github.com/gin-gonic/gin"
 )
@@ -18,7 +18,6 @@ func CreateStudent(c *gin.Context) {
 
 	var requestBody schemas.RequestStudent
 	_ = c.ShouldBindJSON(&requestBody)
-
 	err := requestBody.Validate()
 	if err != nil {
 		response.Message = err.Error()
@@ -100,40 +99,17 @@ func GetStudent(c *gin.Context) {
 }
 
 func UpdateStudent(c *gin.Context) {
-	var requestBody schemas.UpdateStudent
+	var requestBody schemas.UpdateStudentRequest
 	_ = c.ShouldBindJSON(&requestBody)
 	requestBody.Name = strings.TrimSpace(requestBody.Name)
+	studentId := c.Param("id")
 
 	response := &models.Response{
 		StatusCode: http.StatusOK,
 		Success:    true,
 	}
 
-	student, err := services.StudentService.UpdateStudent(requestBody)
-	if err != nil {
-		response.StatusCode = http.StatusNotFound
-		response.Success = false
-		response.Message = err.Error()
-		response.SendResponse(c)
-		return
-	}
-
-	response.Data = gin.H{
-		"student": student,
-	}
-	response.SendResponse(c)
-}
-
-func UpdateScore(c *gin.Context) {
-	var requestBody schemas.UpdateScoreStudent
-	_ = c.ShouldBindJSON(&requestBody)
-
-	response := &models.Response{
-		StatusCode: http.StatusOK,
-		Success:    true,
-	}
-
-	student, err := services.StudentService.UpdateScore(requestBody)
+	student, err := services.StudentService.UpdateStudent(studentId, requestBody)
 	if err != nil {
 		response.StatusCode = http.StatusNotFound
 		response.Success = false

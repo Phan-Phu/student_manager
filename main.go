@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"studenent_manager/routes"
-	"studenent_manager/services"
+	"student_manager/routes"
+	"student_manager/services"
 	"time"
 )
 

@@ -2,37 +2,52 @@ package repository
 
 import (
 	"errors"
-	"studenent_manager/models"
-	"studenent_manager/models/db"
+	"student_manager/models"
+	"student_manager/models/db"
 
 	"github.com/kamva/mgm/v3"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-type ClassRepository interface {
-	FindByID(classIDString string) (*db.Class, error)
+type ClassRepositoryInterface interface {
+	Create(class *db.Class) error
+	Update(class *db.Class) error
+	FindByID(ClassId string) (*db.Class, error)
+	FindAll() ([]*db.Class, error)
 }
 
-type MongoClassRepository struct {
-	classCollection *mgm.Collection
+type ClassRepository struct {
+	collection *mgm.Collection
 }
 
-func NewMongoClassRepository() *MongoClassRepository {
-	return &MongoClassRepository{
-		classCollection: mgm.Coll(&db.Class{}),
+func NewMongoClassRepository() *ClassRepository {
+	return &ClassRepository{
+		collection: mgm.Coll(&db.Class{}),
 	}
 }
 
-func (r *MongoClassRepository) FindByID(classIDString string) (*db.Class, error) {
-	classId, err := primitive.ObjectIDFromHex(classIDString)
-	if err != nil {
-		return nil, errors.New(models.GetErrorMessage(models.ErrorCodeInputIsWrong))
-	}
+func (r *ClassRepository) Create(class *db.Class) error {
+	return r.collection.Create(class)
+}
 
+func (r *ClassRepository) Update(class *db.Class) error {
+	return r.collection.Update(class)
+}
+
+func (r *ClassRepository) FindByID(classId primitive.ObjectID) (*db.Class, error) {
 	Class := &db.Class{}
-	err = r.classCollection.FindByID(classId, Class)
+	err := r.collection.FindByID(classId, Class)
 	if err != nil {
 		return nil, errors.New(models.GetErrorMessage(models.ErrorCodeNotFoundClass))
 	}
 	return Class, nil
+}
+
+func (r *ClassRepository) FindAll() ([]*db.Class, error) {
+	var classes []*db.Class
+	if err := r.collection.SimpleFind(&classes, bson.M{}); err != nil {
+		return nil, errors.New(models.GetErrorMessage(models.ErrorCodeCanNotFindClass))
+	}
+	return classes, nil
 }

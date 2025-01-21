@@ -1,7 +1,7 @@
 package services
 
 import (
-	database "studenent_manager/models"
+	database "student_manager/models"
 
 	"github.com/spf13/viper"
 )
@@ -33,4 +33,6 @@ func LoadConfig() {
 func InitializeRepository() {
 	InitializeStudentRepository()
 	InitializeClassRepository()
+	InitializeTeacherRepository()
+	InitializeCourseService()
 }

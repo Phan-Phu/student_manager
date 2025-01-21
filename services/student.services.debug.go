@@ -3,8 +3,8 @@ package services
 import (
 	"errors"
 	"fmt"
-	"studenent_manager/models"
-	db "studenent_manager/models/db"
+	"student_manager/models"
+	db "student_manager/models/db"
 	"sync"
 	"time"
 )

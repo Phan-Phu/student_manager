@@ -2,10 +2,10 @@ package routes
 
 import (
 	"net/http"
-	"studenent_manager/controllers"
-	"studenent_manager/middlewares"
-	"studenent_manager/models"
-	"studenent_manager/services"
+	"student_manager/controllers"
+	"student_manager/middlewares"
+	"student_manager/models"
+	"student_manager/services"
 
 	"github.com/gin-gonic/gin"
 	//"github.com/swaggo/swag/example/basic/docs"
@@ -31,6 +31,9 @@ func ConfigRoute() *gin.Engine {
 		StudentRoute(admin)
 		TeacherRoute(admin)
 		ClassRoute(admin)
+		// SemesterRoute(admin)
+		CourseRoute(admin)
+		SubjectRoute(admin)
 	}
 
 	r.POST("/teacher/login", controllers.LoginTeacher)

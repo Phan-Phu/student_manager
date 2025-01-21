@@ -2,151 +2,116 @@ package services
 
 import (
 	"errors"
-	db "studenent_manager/models/db"
-	"studenent_manager/models/repository"
-	"studenent_manager/models/schemas"
-	"time"
+	"student_manager/models"
+	"student_manager/models/db"
+	"student_manager/models/repository"
+	"student_manager/models/schemas"
 
 	"github.com/kamva/mgm/v3"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 var ClassService *ClassRepoService
 
 type ClassRepoService struct {
-	*repository.MongoClassRepository
+	*repository.ClassRepository
 }
 
 func InitializeClassRepository() {
 	ClassService = &ClassRepoService{
-		MongoClassRepository: repository.NewMongoClassRepository(),
+		ClassRepository: repository.NewMongoClassRepository(),
 	}
 }
 
-func CreateClass(data schemas.ClassRequest) (*schemas.ClassResponse, error) {
-	classId := GenerateClassID()
-	currentTime := time.Now().Format("2006-01-02 15:04:05")
+func (repo *ClassRepoService) CreateClass(data schemas.RequestClass) (*schemas.ClassResponse, error) {
 
-	class := db.CreateClass(classId, data.Name, currentTime, data.MaxStudent)
-	err := mgm.Coll(class).Create(class)
+	class := db.NewClass(data.Name, data.MaxStudent)
+	err := repo.Create(class)
+	if err != nil {
+		return nil, errors.New(models.GetErrorMessage(models.ErrorCodeCanNotCreateClass))
+	}
+
+	classResponse := &schemas.ClassResponse{
+		Name:       class.Name,
+		MaxStudent: class.MaxStudent,
+	}
+
+	return classResponse, nil
+}
+
+func (repo *ClassRepoService) GetClasses() ([]*db.Class, error) {
+	classes, err := repo.FindAll()
 
 	if err != nil {
-		return nil, errors.New("cannot create new class")
+		return nil, errors.New(models.GetErrorMessage(models.ErrorCodeCanNotFindClass))
+	}
+	return classes, nil
+}
+
+func (repo *ClassRepoService) GetClass(classIDString string) (*schemas.ClassResponse, error) {
+	classId, err := primitive.ObjectIDFromHex(classIDString)
+	if err != nil {
+		return nil, errors.New(models.GetErrorMessage(models.ErrorCodeInputIsWrong))
+	}
+
+	details, err := repo.FindByID(classId)
+	if err != nil {
+		return nil, errors.New(models.GetErrorMessage(models.ErrorCodeCanNotFindClass))
 	}
 
 	response := &schemas.ClassResponse{
-		ClassID:    class.ID,
-		Name:       class.Name,
-		MaxStudent: class.MaxStudent,
-		CreateDate: class.CreateDate,
+		ClassID:    details.ID,
+		CreateDate: details.CreateDate,
+		Name:       details.Name,
+		MaxStudent: details.MaxStudent,
 	}
 
 	return response, nil
 }
 
-func GetClasses() ([]db.Class, error) {
-	var classes []db.Class
-	err := mgm.Coll(&db.Class{}).SimpleFind(&classes, bson.M{})
+func (repo *ClassRepoService) UpdateClass(data schemas.UpdateClassRequest) (*schemas.ResponseClassUpdate, error) {
+	classId, err := primitive.ObjectIDFromHex(data.ID)
 	if err != nil {
-		return nil, errors.New("cannot get classes")
+		return nil, errors.New(models.GetErrorMessage(models.ErrorCodeInputIsWrong))
 	}
-	// for i := 0; i < len(classes); i++ {
 
-	// 	class := &classes[i]
-	// 	class, _ = loadNavigationProperty(class)
+	class, err := repo.FindByID(classId)
+	if err != nil {
+		return nil, errors.New(models.GetErrorMessage(models.ErrorCodeCanNotFindClass))
+	}
 
-	// 	classes[i].Classs = class.Classs
-	// 	classes[i].Teachers = class.Teachers
-	// }
+	class.Name = data.Name
+	class.MaxStudent = data.MaxStudent
 
-	return classes, nil
+	err = ClassService.Update(class)
+	if err != nil {
+		return nil, errors.New(models.GetErrorMessage(models.ErrorCodeCanNotUpdateClass))
+	}
+
+	response := &schemas.ResponseClassUpdate{
+		ID:         class.ID.Hex(),
+		Name:       class.Name,
+		MaxStudent: class.MaxStudent,
+	}
+
+	return response, nil
 }
 
-func GetClass(className string) (*db.Class, error) {
-	class := &db.Class{}
-	err := mgm.Coll(class).First(bson.M{"name": className}, class)
+func (repo *ClassRepoService) DeleteClass(data schemas.DeleteClassRequest) error {
+	classId, err := primitive.ObjectIDFromHex(data.ID)
 	if err != nil {
-		if err == mongo.ErrNoDocuments {
-			return nil, errors.New("class not found")
-		}
-		return nil, errors.New("cannot get class")
-	}
-	class, _ = loadNavigationProperty(class)
-
-	return class, nil
-}
-
-func UpdateClass(classId int, name string, Classs []int, teachers []int) (*db.Class, error) {
-	class := &db.Class{}
-	err := mgm.Coll(class).First(bson.M{"class_id": classId}, class)
-	if err != nil {
-		if err == mgm.Ctx().Err() {
-			return nil, errors.New("class not found")
-		}
-		return nil, errors.New("cannot get class")
+		return errors.New(models.GetErrorMessage(models.ErrorCodeInputIsWrong))
 	}
 
-	class.Name = name
-	// class.ClassIds = Classs
-	// class.TeacherIds = teachers
-
-	err = mgm.Coll(class).Update(class)
+	Class, err := repo.FindByID(classId)
 	if err != nil {
-		return nil, errors.New("cannot update class")
+		return errors.New(models.GetErrorMessage(models.ErrorCodeCanNotFindClass))
 	}
 
-	return class, nil
-}
-
-func DeleteClass(classID int) error {
-	class := &db.Class{}
-	err := mgm.Coll(class).First(bson.M{"class_id": classID}, class)
+	err = mgm.Coll(Class).Delete(Class)
 	if err != nil {
-		if err == mgm.Ctx().Err() {
-			return errors.New("class not found")
-		}
-		return errors.New("cannot get class")
-	}
-
-	err = mgm.Coll(class).Delete(class)
-	if err != nil {
-		return errors.New("cannot delete class")
+		return errors.New(models.GetErrorMessage(models.ErrorCodeFailDeleteClass))
 	}
 
 	return nil
-}
-
-func GenerateClassID() int {
-	classes, _ := GetClasses()
-	classId := len(classes) + 1
-	return classId
-}
-
-func loadNavigationProperty(class *db.Class) (*db.Class, error) {
-	// var Classs []db.Class
-	// var teachers []db.Teacher
-
-	// // Fetch Classs if there are Class IDs
-	// if len(class.ClassIds) > 0 {
-	// 	query := bson.M{"Class_id": bson.M{"$in": class.ClassIds}}
-	// 	err := mgm.Coll(&db.Class{}).SimpleFind(&Classs, query)
-	// 	if err != nil {
-	// 		return class, errors.New("cannot find Classs")
-	// 	}
-	// }
-
-	// // Fetch teachers if there are teacher IDs
-	// if len(class.TeacherIds) > 0 {
-	// 	query := bson.M{"teacher_id": bson.M{"$in": class.TeacherIds}}
-	// 	err := mgm.Coll(&db.Teacher{}).SimpleFind(&teachers, query)
-	// 	if err != nil {
-	// 		return class, errors.New("cannot find teachers")
-	// 	}
-	// }
-
-	// class.Classs = Classs
-	// class.Teachers = teachers
-
-	return class, nil
 }

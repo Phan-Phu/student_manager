@@ -3,9 +3,10 @@ package repository
 import (
 	"context"
 	"errors"
-	"studenent_manager/models"
-	"studenent_manager/models/db"
-	"studenent_manager/models/schemas"
+	"student_manager/models"
+	"student_manager/models/db"
+	"student_manager/models/indexing"
+	"student_manager/models/schemas"
 
 	"github.com/kamva/mgm/v3"
 	"go.mongodb.org/mongo-driver/bson"
@@ -34,6 +35,7 @@ type MongoStudentRepository struct {
 }
 
 func NewMongoStudentRepository() *MongoStudentRepository {
+	indexing.NewIndexingStudent()
 	return &MongoStudentRepository{
 		studentCollection: mgm.Coll(&db.Student{}),
 	}

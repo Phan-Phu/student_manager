@@ -3,15 +3,13 @@ package services
 import (
 	"errors"
 	"math"
-	"studenent_manager/models"
-	db "studenent_manager/models/db"
-	"studenent_manager/models/indexing"
-	"studenent_manager/models/repository"
-	"studenent_manager/models/schemas"
+	"student_manager/models"
+	db "student_manager/models/db"
+	"student_manager/models/repository"
+	"student_manager/models/schemas"
 
 	"github.com/kamva/mgm/v3"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
@@ -25,22 +23,6 @@ func InitializeStudentRepository() {
 	StudentService = &StudentRepoService{
 		MongoStudentRepository: repository.NewMongoStudentRepository(),
 	}
-
-	indexModels := []mongo.IndexModel{}
-	// indexing.DeleteIndexing("age_1")
-	indexing.DeleteAllIndexing()
-
-	count, err := StudentService.Count()
-	if err == nil && count > 0 {
-		indexModels = append(indexModels, indexing.NewIndexingByStudentName())
-		indexModels = append(indexModels, indexing.NewIndexingByStudentAge())
-		indexModels = append(indexModels, indexing.NewPartialIndexScore(50)) // target score: 50
-		indexModels = append(indexModels, indexing.NewIndexingByStudentAgeAndName())
-		indexModels = append(indexModels, indexing.NewWildCardIndex())
-		indexing.AddIndexModels(indexModels)
-		indexing.PrintAllIndexing()
-
-	}
 }
 
 func (repo *StudentRepoService) CreateStudent(data schemas.RequestStudent) (*schemas.StudentResponse, error) {
@@ -51,7 +33,7 @@ func (repo *StudentRepoService) CreateStudent(data schemas.RequestStudent) (*sch
 		return nil, errors.New(models.GetErrorMessage(models.ErrorCodeInputIsWrong))
 	}
 
-	class, err := ClassService.FindByID(data.ClassId)
+	class, err := ClassService.FindByID(classId)
 	if err != nil {
 		return nil, errors.New(models.GetErrorMessage(models.ErrorCodeInputIsWrong))
 	}
@@ -145,10 +127,10 @@ func (repo *StudentRepoService) GetStudent(studentIDString string) (*schemas.Stu
 	return response, nil
 }
 
-func (repo *StudentRepoService) UpdateStudent(data schemas.UpdateStudent) (*schemas.ResponseUpdateStudent, error) {
-	student, err := repo.FindByID(data.StudentID)
+func (repo *StudentRepoService) UpdateStudent(studentId string, data schemas.UpdateStudentRequest) (*schemas.ResponseUpdateStudent, error) {
+	student, err := repo.FindByID(studentId)
 	if err != nil {
-		return nil, errors.New(models.GetErrorMessage(models.ErrorCodeMaxStudentInClass))
+		return nil, errors.New(models.GetErrorMessage(models.ErrorCodeIDIsWrong))
 	}
 
 	student.Name = data.Name
